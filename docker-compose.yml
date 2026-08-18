@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: sentinelops-db
+    environment:
+      POSTGRES_USER: sentinelops
+      POSTGRES_PASSWORD: sentinelops_pass
+      POSTGRES_DB: sentinelops_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinelops -d sentinelops_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentinelops_network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: sentinelops-backend
+    environment:
+      DATABASE_URL: postgresql://sentinelops:sentinelops_pass@postgres:5432/sentinelops_db
+      JWT_SECRET_KEY: test-secret-key-change-in-production
+      CORS_ORIGINS: http://localhost:5173,http://frontend:80
+      DEBUG: "True"
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/logs:/app/logs
+    networks:
+      - sentinelops_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    container_name: sentinelops-frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api/v1
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+    networks:
+      - sentinelops_network
+
+volumes:
+  postgres_data:
+
+networks:
+  sentinelops_network:
+    driver: bridge
