@@ -1,0 +1,85 @@
+"""Investigation API routes."""
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.services.investigation_service import InvestigationService
+
+router = APIRouter(prefix="/investigations", tags=["investigations"])
+
+
+@router.get("", response_model=list[dict])
+async def list_investigations(db: Session = Depends(get_db)):
+    investigations = InvestigationService.list_investigations(db)
+    return [
+        {
+            "id": investigation.id,
+            "title": investigation.title,
+            "description": investigation.description,
+            "severity": investigation.severity,
+            "status": investigation.status,
+            "risk_score": investigation.risk_score,
+            "created_by": investigation.created_by,
+            "created_at": investigation.created_at.isoformat(),
+            "updated_at": investigation.updated_at.isoformat(),
+        }
+        for investigation in investigations
+    ]
+
+
+@router.get("/{investigation_id}", response_model=dict)
+async def get_investigation(investigation_id: str, db: Session = Depends(get_db)):
+    try:
+        investigation = InvestigationService.get_investigation(db, investigation_id)
+        return {
+            "id": investigation.id,
+            "title": investigation.title,
+            "description": investigation.description,
+            "severity": investigation.severity,
+            "status": investigation.status,
+            "risk_score": investigation.risk_score,
+            "created_by": investigation.created_by,
+            "created_at": investigation.created_at.isoformat(),
+            "updated_at": investigation.updated_at.isoformat(),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("", response_model=dict)
+async def create_investigation(payload: dict, db: Session = Depends(get_db)):
+    investigation = InvestigationService.create_investigation(
+        db,
+        title=payload.get("title", "New investigation"),
+        description=payload.get("description"),
+        severity=payload.get("severity", "MEDIUM"),
+        risk_score=float(payload.get("risk_score", 0.0)),
+        status=payload.get("status", "OPEN"),
+        created_by=payload.get("created_by"),
+    )
+    return {
+        "id": investigation.id,
+        "title": investigation.title,
+        "description": investigation.description,
+        "severity": investigation.severity,
+        "status": investigation.status,
+        "risk_score": investigation.risk_score,
+    }
+
+
+@router.patch("/{investigation_id}", response_model=dict)
+async def update_investigation(investigation_id: str, payload: dict, db: Session = Depends(get_db)):
+    investigation = InvestigationService.update_investigation(db, investigation_id, **payload)
+    return {
+        "id": investigation.id,
+        "title": investigation.title,
+        "description": investigation.description,
+        "severity": investigation.severity,
+        "status": investigation.status,
+        "risk_score": investigation.risk_score,
+    }
+
+
+@router.delete("/{investigation_id}")
+async def delete_investigation(investigation_id: str, db: Session = Depends(get_db)):
+    InvestigationService.delete_investigation(db, investigation_id)
+    return {"status": "success", "message": "Investigation deleted"}

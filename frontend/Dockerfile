@@ -1,22 +1,21 @@
-FROM node:20-alpine as build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
 # Copy package files
-COPY frontend/package.json frontend/package-lock.json ./
+COPY package.json package-lock.json ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy source code
-COPY frontend/src ./src
-COPY frontend/public ./public
-COPY frontend/index.html .
-COPY frontend/vite.config.ts .
-COPY frontend/tsconfig.json .
-COPY frontend/tsconfig.node.json .
-COPY frontend/tailwind.config.js .
-COPY frontend/postcss.config.js .
+COPY src ./src
+COPY index.html .
+COPY vite.config.ts .
+COPY tsconfig.json .
+COPY tsconfig.node.json .
+COPY tailwind.config.js .
+COPY postcss.config.js .
 
 # Build
 RUN npm run build

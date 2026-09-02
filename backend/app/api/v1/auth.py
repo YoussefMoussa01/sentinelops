@@ -16,7 +16,9 @@ from app.schemas import (
     TokenResponse,
 )
 from app.services import UserService
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
 
@@ -80,9 +82,10 @@ async def login(login_req: LoginRequest, db: Session = Depends(get_db)):
             detail=e.message,
         )
     except Exception as e:
+        logger.exception("Login failed unexpectedly")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Login failed",
+               detail="Login failed",
         )
 
 

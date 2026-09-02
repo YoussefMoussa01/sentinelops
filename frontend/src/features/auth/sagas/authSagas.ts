@@ -8,7 +8,6 @@ import {
   restoreSessionRequest,
   restoreSessionSuccess,
   restoreSessionFailure,
-  clearError,
 } from '../state/authSlice'
 import { apiClient } from '@/services/api/client'
 import type { PayloadAction } from '@reduxjs/toolkit'
@@ -17,7 +16,7 @@ import type { LoginRequest, LoginResponse } from '../types/auth.types'
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_STORAGE_KEY || 'sentinelops_token'
 const REFRESH_TOKEN_KEY = 'sentinelops_refresh_token'
 
-function* loginSaga(action: PayloadAction<LoginRequest>) {
+function* loginSaga(action: PayloadAction<LoginRequest>): Generator<any, void, any> {
   try {
     // Call backend login endpoint
     const response: LoginResponse = yield call(() =>
@@ -47,7 +46,7 @@ function* loginSaga(action: PayloadAction<LoginRequest>) {
   }
 }
 
-function* logoutSaga() {
+function* logoutSaga(): Generator<any, void, any> {
   try {
     // Call logout endpoint
     yield call(() => apiClient.post('/auth/logout', {}))
@@ -65,7 +64,7 @@ function* logoutSaga() {
   }
 }
 
-function* restoreSessionSaga() {
+function* restoreSessionSaga(): Generator<any, void, any> {
   try {
     const token = localStorage.getItem(TOKEN_KEY)
     if (!token) {
@@ -74,7 +73,7 @@ function* restoreSessionSaga() {
     }
 
     // Call /auth/me endpoint with token
-    const response = yield call(() => 
+    const response = yield call(() =>
       apiClient.get('/auth/me')
     )
 

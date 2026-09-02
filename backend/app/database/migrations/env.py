@@ -13,8 +13,7 @@ config = context.config
 settings = get_settings()
 
 # Configure database URL
-if config.get_main_option("sqlalchemy.url") is None:
-    config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 # Logging configuration
 if config.config_file_name is not None:

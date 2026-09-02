@@ -82,7 +82,7 @@ export const Sidebar = () => {
 
   const visibleItems = navItems.filter((item) => {
     if (!item.requiredPermission) return true
-    return user?.permissions.includes(item.requiredPermission)
+    return user?.permissions?.includes(item.requiredPermission)
   })
 
   return (

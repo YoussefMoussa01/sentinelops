@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { AuthState, User } from '../types/auth.types'
+import { AuthState, User, LoginRequest } from '../types/auth.types'
 
 const initialState: AuthState = {
   isLoading: false,
@@ -15,10 +15,10 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     // Login
-    loginRequest: (state) => {
-      state.isLoading = true
-      state.error = null
-    },
+loginRequest: (state, action: PayloadAction<LoginRequest>) => {
+  state.isLoading = true
+  state.error = null
+},
     loginSuccess: (state, action: PayloadAction<{ user: User; token: string; refreshToken?: string }>) => {
       state.isLoading = false
       state.user = action.payload.user

@@ -19,11 +19,11 @@ export const ProtectedRoute = ({
     return <Navigate to="/login" replace />
   }
 
-  if (requiredRole && (!user || !user.roles.includes(requiredRole))) {
+  if (requiredRole && (!user || !user.roles?.includes(requiredRole))) {
     return <Navigate to="/dashboard" replace />
   }
 
-  if (requiredPermission && (!user || !user.permissions.includes(requiredPermission))) {
+  if (requiredPermission && (!user || !user.permissions?.includes(requiredPermission))) {
     return <Navigate to="/dashboard" replace />
   }
 
