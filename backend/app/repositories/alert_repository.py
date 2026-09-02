@@ -11,7 +11,7 @@ class AlertRepository:
     @staticmethod
     def create(db: Session, *, title: str, description: str | None, severity: str, status: str,
                source: str | None, detection_time, user_id: str | None, device_id: str | None,
-               ip_address: str | None) -> Alert:
+               ip_address: str | None, investigation_id: str | None = None) -> Alert:
         alert = Alert(
             title=title,
             description=description,
@@ -22,6 +22,7 @@ class AlertRepository:
             user_id=user_id,
             device_id=device_id,
             ip_address=ip_address,
+            investigation_id=investigation_id,
         )
         db.add(alert)
         db.commit()

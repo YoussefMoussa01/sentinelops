@@ -41,7 +41,7 @@ export const Router = () => (
         path="/alerts"
         element={
           <Layout>
-            <ProtectedRoute element={<AlertsPage />} requiredPermission="view_alerts" />
+            <ProtectedRoute element={<AlertsPage />} />
           </Layout>
         }
       />
@@ -49,7 +49,7 @@ export const Router = () => (
         path="/alerts/:alertId"
         element={
           <Layout>
-            <ProtectedRoute element={<AlertDetailPage />} requiredPermission="view_alerts" />
+            <ProtectedRoute element={<AlertDetailPage />} />
           </Layout>
         }
       />
@@ -89,7 +89,7 @@ export const Router = () => (
         path="/devices"
         element={
           <Layout>
-            <ProtectedRoute element={<DevicesPage />} requiredPermission="view_users" />
+            <ProtectedRoute element={<DevicesPage />} />
           </Layout>
         }
       />
@@ -97,7 +97,7 @@ export const Router = () => (
         path="/devices/:deviceId"
         element={
           <Layout>
-            <ProtectedRoute element={<DeviceDetailPage />} requiredPermission="view_users" />
+            <ProtectedRoute element={<DeviceDetailPage />} />
           </Layout>
         }
       />

@@ -31,6 +31,7 @@ class Alert(Base, TimestampMixin):
     user_id = Column(String(36), nullable=True)
     device_id = Column(String(36), nullable=True)
     ip_address = Column(String(45), nullable=True)
+    investigation_id = Column(String(36), nullable=True)
 
     def __repr__(self) -> str:
         return f"<Alert(id={self.id}, title={self.title})>"

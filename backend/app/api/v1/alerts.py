@@ -20,6 +20,7 @@ async def list_alerts(db: Session = Depends(get_db)):
             "severity": alert.severity,
             "status": alert.status,
             "source": alert.source,
+            "investigation_id": alert.investigation_id,
             "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
             "created_at": alert.created_at.isoformat(),
             "updated_at": alert.updated_at.isoformat(),
@@ -39,6 +40,7 @@ async def get_alert(alert_id: str, db: Session = Depends(get_db)):
             "severity": alert.severity,
             "status": alert.status,
             "source": alert.source,
+            "investigation_id": alert.investigation_id,
             "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
             "created_at": alert.created_at.isoformat(),
             "updated_at": alert.updated_at.isoformat(),
@@ -64,6 +66,7 @@ async def create_alert(payload: dict, db: Session = Depends(get_db)):
         user_id=payload.get("user_id"),
         device_id=payload.get("device_id"),
         ip_address=payload.get("ip_address"),
+        investigation_id=payload.get("investigation_id"),
     )
     return {
         "id": alert.id,
@@ -72,6 +75,7 @@ async def create_alert(payload: dict, db: Session = Depends(get_db)):
         "severity": alert.severity,
         "status": alert.status,
         "source": alert.source,
+        "investigation_id": alert.investigation_id,
         "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
     }
 
@@ -86,6 +90,7 @@ async def update_alert(alert_id: str, payload: dict, db: Session = Depends(get_d
         "severity": alert.severity,
         "status": alert.status,
         "source": alert.source,
+        "investigation_id": alert.investigation_id,
     }
 
 

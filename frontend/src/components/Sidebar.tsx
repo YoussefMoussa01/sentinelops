@@ -42,19 +42,16 @@ export const Sidebar = () => {
       label: 'Alerts',
       to: '/alerts',
       icon: <AlertCircle size={20} />,
-      requiredPermission: 'view_alerts',
     },
     {
       label: 'Investigations',
       to: '/investigations',
       icon: <FileText size={20} />,
-      requiredPermission: 'view_investigations',
     },
     {
       label: 'Security Data',
       to: '#',
       icon: <Server size={20} />,
-      requiredPermission: 'view_users',
       subItems: [
         { label: 'Users', to: '/users', icon: <Users size={18} /> },
         { label: 'Devices', to: '/devices', icon: <Server size={18} /> },

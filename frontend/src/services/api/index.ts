@@ -54,6 +54,13 @@ export const investigationsAPI = {
   },
 }
 
+// Dashboard API
+export const dashboardAPI = {
+  getStats: async () => {
+    return apiClient.get('/dashboard/stats')
+  },
+}
+
 // Users API
 export const usersAPI = {
   getUsers: async () => {
@@ -61,6 +68,15 @@ export const usersAPI = {
   },
   getUser: async (id: string) => {
     return apiClient.get(`/admin/users/${id}`)
+  },
+  createUser: async (data: unknown) => {
+    return apiClient.post('/admin/users', data)
+  },
+  updateUser: async (id: string, data: unknown) => {
+    return apiClient.patch(`/admin/users/${id}`, data)
+  },
+  deleteUser: async (id: string) => {
+    return apiClient.delete(`/admin/users/${id}`)
   },
 }
 
@@ -71,6 +87,15 @@ export const devicesAPI = {
   },
   getDevice: async (id: string) => {
     return apiClient.get(`/devices/${id}`)
+  },
+  createDevice: async (data: unknown) => {
+    return apiClient.post('/devices', data)
+  },
+  updateDevice: async (id: string, data: unknown) => {
+    return apiClient.patch(`/devices/${id}`, data)
+  },
+  deleteDevice: async (id: string) => {
+    return apiClient.delete(`/devices/${id}`)
   },
 }
 
