@@ -21,14 +21,19 @@ export const InvestigationsPage = () => {
   const [severity, setSeverity] = useState('MEDIUM')
   const [riskScore, setRiskScore] = useState('0')
   const [saving, setSaving] = useState(false)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [severityFilter, setSeverityFilter] = useState('ALL')
+  const [page, setPage] = useState(0)
+  const pageSize = 20
 
   useEffect(() => {
     loadInvestigations()
-  }, [])
+  }, [page])
 
   const loadInvestigations = () => {
     setLoading(true)
-    investigationsAPI.getInvestigations()
+    investigationsAPI.getInvestigations(page * pageSize, pageSize)
       .then((response) => {
         if (Array.isArray(response)) {
           setInvestigations(response as InvestigationItem[])
@@ -64,6 +69,13 @@ export const InvestigationsPage = () => {
     }
   }
 
+  const filteredInvestigations = investigations.filter((investigation) => {
+    const text = `${investigation.title} ${investigation.description || ''}`.toLowerCase()
+    return text.includes(search.toLowerCase()) &&
+      (statusFilter === 'ALL' || investigation.status === statusFilter) &&
+      (severityFilter === 'ALL' || investigation.severity === severityFilter)
+  })
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -91,11 +103,16 @@ export const InvestigationsPage = () => {
       {error && <p className="text-red-600">Unable to load investigations: {error}</p>}
       {!loading && !error && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {investigations.length === 0 ? (
+          <div className="grid grid-cols-1 gap-3 border-b border-gray-200 p-4 md:grid-cols-3">
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search investigations" className="rounded border border-gray-300 px-3 py-2" />
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded border border-gray-300 px-3 py-2"><option value="ALL">All statuses</option><option>OPEN</option><option>CLOSED</option><option>ARCHIVED</option></select>
+            <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)} className="rounded border border-gray-300 px-3 py-2"><option value="ALL">All severities</option><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select>
+          </div>
+          {filteredInvestigations.length === 0 ? (
             <p className="p-6 text-gray-600">No investigations found.</p>
           ) : (
             <div className="divide-y divide-gray-200">
-              {investigations.map((investigation) => (
+              {filteredInvestigations.map((investigation) => (
                 <Link key={investigation.id} to={`/investigations/${investigation.id}`} className="block p-5 hover:bg-gray-50">
                   <div className="flex items-center justify-between gap-4">
                     <h2 className="font-semibold text-gray-900">{investigation.title}</h2>
@@ -107,6 +124,11 @@ export const InvestigationsPage = () => {
               ))}
             </div>
           )}
+          <div className="flex items-center justify-between border-t border-gray-200 p-4">
+            <button disabled={page === 0 || loading} onClick={() => setPage(page - 1)} className="rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40">Previous</button>
+            <span className="text-sm text-gray-500">Page {page + 1}</span>
+            <button disabled={investigations.length < pageSize || loading} onClick={() => setPage(page + 1)} className="rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40">Next</button>
+          </div>
         </div>
       )}
     </div>

@@ -1,10 +1,21 @@
 """API dependencies."""
-from typing import Optional
 from fastapi import Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.core.security import decode_token
 from app.repositories.user_repository import UserRepository
+
+ROLE_PERMISSIONS = {
+    "SOC_ADMIN": {"view_alerts", "view_investigations", "view_users", "view_logs", "use_ai_agent", "manage_users"},
+    "SECURITY_ANALYST": {"view_alerts", "view_investigations", "view_logs", "use_ai_agent"},
+    "INVESTIGATOR": {"view_alerts", "view_investigations", "view_logs", "use_ai_agent"},
+    "VIEWER": {"view_alerts", "view_investigations"},
+}
+
+
+def has_permission(user, permission: str) -> bool:
+    """Return whether a user role grants a permission."""
+    return permission in ROLE_PERMISSIONS.get(user.role, set())
 
 
 def get_token_from_header(authorization: str = Header(None)) -> str:
@@ -50,6 +61,12 @@ async def get_current_user(
             detail="User not found",
         )
 
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is disabled",
+        )
+
     return user
 
 
@@ -57,9 +74,7 @@ def check_permission(permission: str):
     """Check if user has specific permission."""
 
     async def _check_permission(current_user = Depends(get_current_user)):
-        # TODO: Implement permission checking in Phase 3
-        # For now, only check if user is authenticated
-        if not current_user:
+        if not has_permission(current_user, permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",

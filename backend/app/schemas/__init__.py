@@ -11,7 +11,7 @@ from app.schemas.common import (
     ApiResponse,
     PaginatedResponse,
 )
-from app.schemas.auth import LoginRequest, TokenResponse, LoginResponse
+from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, LoginResponse
 
 __all__ = [
     "UserBase",
@@ -25,6 +25,7 @@ __all__ = [
     "ApiResponse",
     "PaginatedResponse",
     "LoginRequest",
+    "RegisterRequest",
     "TokenResponse",
     "LoginResponse",
 ]

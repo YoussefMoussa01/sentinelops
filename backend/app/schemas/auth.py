@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 
@@ -7,6 +7,14 @@ class LoginRequest(BaseModel):
     """Login request schema."""
 
     username: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=8)
+
+
+class RegisterRequest(BaseModel):
+    """Public account registration request."""
+
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr
     password: str = Field(..., min_length=8)
 
 

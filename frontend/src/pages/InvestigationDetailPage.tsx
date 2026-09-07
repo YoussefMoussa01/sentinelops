@@ -22,6 +22,13 @@ interface AlertItem {
   investigation_id?: string
 }
 
+interface TimelineEvent {
+  type: string
+  title: string
+  description: string
+  timestamp: string
+}
+
 export const InvestigationDetailPage = () => {
   const { investigationId } = useParams<{ investigationId: string }>()
   const [investigation, setInvestigation] = useState<InvestigationDetails | null>(null)
@@ -32,6 +39,7 @@ export const InvestigationDetailPage = () => {
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [selectedAlertId, setSelectedAlertId] = useState('')
   const [linking, setLinking] = useState(false)
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([])
 
   useEffect(() => {
     if (!investigationId) return
@@ -42,6 +50,9 @@ export const InvestigationDetailPage = () => {
       .finally(() => setLoading(false))
     alertsAPI.getAlerts().then((response) => {
       if (Array.isArray(response)) setAlerts(response as AlertItem[])
+    })
+    investigationsAPI.getInvestigationTimeline(investigationId).then((response) => {
+      if (Array.isArray(response)) setTimeline(response as TimelineEvent[])
     })
   }, [investigationId])
 
@@ -55,6 +66,8 @@ export const InvestigationDetailPage = () => {
         alert.id === selectedAlertId ? { ...alert, investigation_id: investigationId } : alert
       ))
       setSelectedAlertId('')
+      const response = await investigationsAPI.getInvestigationTimeline(investigationId)
+      if (Array.isArray(response)) setTimeline(response as TimelineEvent[])
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to link alert')
     } finally {
@@ -152,6 +165,19 @@ export const InvestigationDetailPage = () => {
               </select>
               <button disabled={!selectedAlertId || linking} type="submit" className="rounded bg-brand-600 px-4 py-2 text-white disabled:opacity-50">{linking ? 'Linking...' : 'Link alert'}</button>
             </form>
+          </section>
+          <section className="border-t pt-5">
+            <h3 className="text-lg font-semibold text-gray-900">Investigation timeline</h3>
+            <div className="mt-4 space-y-4 border-l-2 border-gray-200 pl-5">
+              {timeline.map((event) => (
+                <div key={`${event.type}-${event.timestamp}`} className="relative">
+                  <span className="absolute -left-[1.6rem] top-1 h-3 w-3 rounded-full bg-brand-600" />
+                  <p className="text-sm font-medium text-gray-900">{event.title}</p>
+                  <p className="text-sm text-gray-600">{event.description}</p>
+                  <p className="mt-1 text-xs text-gray-500">{event.timestamp}</p>
+                </div>
+              ))}
+            </div>
           </section>
         </div>
       )}

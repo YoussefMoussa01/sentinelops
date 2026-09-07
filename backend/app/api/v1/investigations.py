@@ -1,15 +1,21 @@
 """Investigation API routes."""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.investigation_service import InvestigationService
+from app.api.dependencies import check_permission
+from app.models import Alert
 
 router = APIRouter(prefix="/investigations", tags=["investigations"])
 
 
-@router.get("", response_model=list[dict])
-async def list_investigations(db: Session = Depends(get_db)):
-    investigations = InvestigationService.list_investigations(db)
+@router.get("", response_model=list[dict], dependencies=[Depends(check_permission("view_investigations"))])
+async def list_investigations(
+    db: Session = Depends(get_db),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    investigations = InvestigationService.list_investigations(db, skip=skip, limit=limit)
     return [
         {
             "id": investigation.id,
@@ -26,7 +32,7 @@ async def list_investigations(db: Session = Depends(get_db)):
     ]
 
 
-@router.get("/{investigation_id}", response_model=dict)
+@router.get("/{investigation_id}", response_model=dict, dependencies=[Depends(check_permission("view_investigations"))])
 async def get_investigation(investigation_id: str, db: Session = Depends(get_db)):
     try:
         investigation = InvestigationService.get_investigation(db, investigation_id)
@@ -45,7 +51,26 @@ async def get_investigation(investigation_id: str, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
-@router.post("", response_model=dict)
+@router.get("/{investigation_id}/timeline", response_model=list[dict], dependencies=[Depends(check_permission("view_investigations"))])
+async def get_investigation_timeline(investigation_id: str, db: Session = Depends(get_db)):
+    investigation = InvestigationService.get_investigation(db, investigation_id)
+    events = [{
+        "type": "investigation_created",
+        "title": "Investigation created",
+        "description": investigation.title,
+        "timestamp": investigation.created_at.isoformat(),
+    }]
+    alerts = db.query(Alert).filter(Alert.investigation_id == investigation_id).all()
+    events.extend({
+        "type": "alert_linked",
+        "title": alert.title,
+        "description": f"{alert.severity} alert from {alert.source or 'unknown source'}",
+        "timestamp": (alert.detection_time or alert.created_at).isoformat(),
+    } for alert in alerts)
+    return sorted(events, key=lambda event: event["timestamp"])
+
+
+@router.post("", response_model=dict, dependencies=[Depends(check_permission("view_investigations"))])
 async def create_investigation(payload: dict, db: Session = Depends(get_db)):
     investigation = InvestigationService.create_investigation(
         db,
@@ -66,7 +91,7 @@ async def create_investigation(payload: dict, db: Session = Depends(get_db)):
     }
 
 
-@router.patch("/{investigation_id}", response_model=dict)
+@router.patch("/{investigation_id}", response_model=dict, dependencies=[Depends(check_permission("view_investigations"))])
 async def update_investigation(investigation_id: str, payload: dict, db: Session = Depends(get_db)):
     investigation = InvestigationService.update_investigation(db, investigation_id, **payload)
     return {
@@ -79,7 +104,7 @@ async def update_investigation(investigation_id: str, payload: dict, db: Session
     }
 
 
-@router.delete("/{investigation_id}")
+@router.delete("/{investigation_id}", dependencies=[Depends(check_permission("view_investigations"))])
 async def delete_investigation(investigation_id: str, db: Session = Depends(get_db)):
     InvestigationService.delete_investigation(db, investigation_id)
     return {"status": "success", "message": "Investigation deleted"}

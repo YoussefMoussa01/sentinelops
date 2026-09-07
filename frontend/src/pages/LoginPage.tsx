@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/features/auth'
 
@@ -75,6 +75,9 @@ export const LoginPage = () => {
         <div className="mt-6 pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-600 text-center">
             Test credentials: admin / AdminPassword123!
+          </p>
+          <p className="mt-4 text-center text-sm text-gray-600">
+            Need an account? <Link to="/register" className="font-medium text-brand-600 hover:underline">Create one</Link>
           </p>
         </div>
       </div>

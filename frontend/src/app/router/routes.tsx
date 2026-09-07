@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from '@/pages/LoginPage'
+import { RegisterPage } from '@/pages/RegisterPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { AlertsPage } from '@/pages/AlertsPage'
 import { AlertDetailPage } from '@/pages/AlertDetailPage'
@@ -19,6 +20,7 @@ export const Router = () => (
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       {/* Protected routes */}
       <Route
@@ -89,7 +91,7 @@ export const Router = () => (
         path="/devices"
         element={
           <Layout>
-            <ProtectedRoute element={<DevicesPage />} />
+            <ProtectedRoute element={<DevicesPage />} requiredPermission="view_users" />
           </Layout>
         }
       />
@@ -97,7 +99,7 @@ export const Router = () => (
         path="/devices/:deviceId"
         element={
           <Layout>
-            <ProtectedRoute element={<DeviceDetailPage />} />
+            <ProtectedRoute element={<DeviceDetailPage />} requiredPermission="view_users" />
           </Layout>
         }
       />

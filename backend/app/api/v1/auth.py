@@ -8,12 +8,15 @@ from app.core import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    ConflictError,
 )
 from app.schemas import (
     LoginRequest,
+    RegisterRequest,
     LoginResponse,
     UserResponse,
     TokenResponse,
+    UserCreate,
 )
 from app.services import UserService
 import logging
@@ -21,6 +24,17 @@ import logging
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
+
+ROLE_PERMISSIONS = {
+    "SOC_ADMIN": ["view_alerts", "view_investigations", "view_users", "view_logs", "use_ai_agent", "manage_users"],
+    "SECURITY_ANALYST": ["view_alerts", "view_investigations", "view_logs", "use_ai_agent"],
+    "INVESTIGATOR": ["view_alerts", "view_investigations", "view_logs", "use_ai_agent"],
+    "VIEWER": ["view_alerts", "view_investigations"],
+}
+
+
+def user_access(user):
+    return {"role": user.role, "roles": [user.role], "permissions": ROLE_PERMISSIONS.get(user.role, [])}
 
 
 def get_token_from_header(authorization: str = Header(None)) -> str:
@@ -73,6 +87,7 @@ async def login(login_req: LoginRequest, db: Session = Depends(get_db)):
                 "is_active": user.is_active,
                 "created_at": user.created_at.isoformat(),
                 "updated_at": user.updated_at.isoformat(),
+                **user_access(user),
             },
             token_type="bearer",
         )
@@ -85,8 +100,40 @@ async def login(login_req: LoginRequest, db: Session = Depends(get_db)):
         logger.exception("Login failed unexpectedly")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-               detail="Login failed",
+            detail="Login failed",
         )
+
+
+@router.post("/register", response_model=LoginResponse, status_code=status.HTTP_201_CREATED)
+async def register(register_req: RegisterRequest, db: Session = Depends(get_db)):
+    """Create a viewer account and sign the user in."""
+    try:
+        user = UserService.create_user(
+            db,
+            UserCreate(
+                username=register_req.username,
+                email=register_req.email,
+                password=register_req.password,
+                role="VIEWER",
+            ),
+        )
+        tokens = create_tokens(user.id)
+        return LoginResponse(
+            access_token=tokens["access_token"],
+            refresh_token=tokens["refresh_token"],
+            user={
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "is_active": user.is_active,
+                "created_at": user.created_at.isoformat(),
+                "updated_at": user.updated_at.isoformat(),
+                **user_access(user),
+            },
+            token_type="bearer",
+        )
+    except ConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=exc.message) from exc
 
 
 @router.post("/logout")
@@ -148,6 +195,9 @@ async def get_current_user_info(
             is_active=user.is_active,
             created_at=user.created_at,
             updated_at=user.updated_at,
+            role=user.role,
+            roles=[user.role],
+            permissions=ROLE_PERMISSIONS.get(user.role, []),
         )
     except UnauthorizedError as e:
         raise HTTPException(

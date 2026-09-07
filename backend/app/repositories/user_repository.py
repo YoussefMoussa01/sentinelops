@@ -9,7 +9,7 @@ class UserRepository:
     """Repository for user database operations."""
 
     @staticmethod
-    def create(db: Session, username: str, email: str, password: str) -> User:
+    def create(db: Session, username: str, email: str, password: str, role: str = "VIEWER") -> User:
         """Create a new user."""
         # Check if user already exists
         existing = db.query(User).filter(
@@ -24,6 +24,7 @@ class UserRepository:
             username=username,
             email=email,
             password_hash=hash_password(password),
+            role=role,
         )
         db.add(user)
         db.commit()
@@ -56,6 +57,7 @@ class UserRepository:
         user_id: str,
         email: Optional[str] = None,
         is_active: Optional[bool] = None,
+        role: Optional[str] = None,
     ) -> User:
         """Update user."""
         user = UserRepository.get_by_id(db, user_id)
@@ -66,6 +68,8 @@ class UserRepository:
             user.email = email
         if is_active is not None:
             user.is_active = is_active
+        if role:
+            user.role = role
 
         db.commit()
         db.refresh(user)

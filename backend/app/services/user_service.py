@@ -51,6 +51,7 @@ class UserService:
             username=user_create.username,
             email=user_create.email,
             password=user_create.password,
+            role=user_create.role,
         )
 
     @staticmethod
@@ -61,6 +62,7 @@ class UserService:
             user_id,
             email=user_update.email,
             is_active=user_update.is_active,
+            role=user_update.role,
         )
 
     @staticmethod

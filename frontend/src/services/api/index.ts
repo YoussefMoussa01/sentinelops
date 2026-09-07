@@ -5,6 +5,9 @@ export const authAPI = {
   login: async (username: string, password: string) => {
     return apiClient.post('/auth/login', { username, password })
   },
+  register: async (username: string, email: string, password: string) => {
+    return apiClient.post('/auth/register', { username, email, password })
+  },
   logout: async () => {
     return apiClient.post('/auth/logout', {})
   },
@@ -18,8 +21,8 @@ export const authAPI = {
 
 // Alerts API
 export const alertsAPI = {
-  getAlerts: async () => {
-    return apiClient.get('/alerts')
+  getAlerts: async (skip = 0, limit = 20) => {
+    return apiClient.get('/alerts', { skip, limit })
   },
   getAlert: async (id: string) => {
     return apiClient.get(`/alerts/${id}`)
@@ -37,11 +40,14 @@ export const alertsAPI = {
 
 // Investigations API
 export const investigationsAPI = {
-  getInvestigations: async () => {
-    return apiClient.get('/investigations')
+  getInvestigations: async (skip = 0, limit = 20) => {
+    return apiClient.get('/investigations', { skip, limit })
   },
   getInvestigation: async (id: string) => {
     return apiClient.get(`/investigations/${id}`)
+  },
+  getInvestigationTimeline: async (id: string) => {
+    return apiClient.get(`/investigations/${id}/timeline`)
   },
   createInvestigation: async (data: unknown) => {
     return apiClient.post('/investigations', data)
@@ -105,7 +111,7 @@ export const logsAPI = {
     return apiClient.get('/logs')
   },
   searchLogs: async (query: string) => {
-    return apiClient.get('/logs/search', { query })
+    return apiClient.get('/logs', { query })
   },
 }
 
@@ -122,5 +128,8 @@ export const aiAPI = {
   },
   sendMessage: async (conversationId: string, message: string) => {
     return apiClient.post(`/ai/conversations/${conversationId}/messages`, { message })
+  },
+  queryAssistant: async (message: string) => {
+    return apiClient.post('/ai/query', { message })
   },
 }

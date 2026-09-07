@@ -14,6 +14,7 @@ class UserCreate(UserBase):
     """User creation schema."""
 
     password: str = Field(..., min_length=8)
+    role: str = "VIEWER"
 
 
 class UserUpdate(BaseModel):
@@ -21,6 +22,7 @@ class UserUpdate(BaseModel):
 
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = None
+    role: Optional[str] = None
 
 
 class UserResponse(UserBase):
@@ -30,6 +32,9 @@ class UserResponse(UserBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    role: str = "VIEWER"
+    roles: list[str] = []
+    permissions: list[str] = []
 
     class Config:
         from_attributes = True

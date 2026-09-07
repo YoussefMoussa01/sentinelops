@@ -52,6 +52,7 @@ export const Sidebar = () => {
       label: 'Security Data',
       to: '#',
       icon: <Server size={20} />,
+      requiredPermission: 'view_users',
       subItems: [
         { label: 'Users', to: '/users', icon: <Users size={18} /> },
         { label: 'Devices', to: '/devices', icon: <Server size={18} /> },
@@ -83,8 +84,14 @@ export const Sidebar = () => {
   })
 
   return (
-    <aside className="w-64 bg-gray-900 text-white h-screen flex flex-col border-r border-gray-700">
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+    <aside className="flex h-screen w-64 flex-col border-r border-[#243247] bg-[var(--ink)] text-white">
+      <div className="border-b border-white/10 px-5 py-6">
+        <Link to="/dashboard" className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--cyan)] font-bold text-[var(--ink)]">S</span>
+          <span className="brand-copy"><span className="block text-lg font-bold tracking-tight">SentinelOps</span><span className="block text-[10px] uppercase tracking-[0.16em] text-white/45">Threat response</span></span>
+        </Link>
+      </div>
+      <nav className="flex-1 space-y-2 overflow-y-auto px-3 py-6">
         {visibleItems.map((item) => {
           const isActive =
             location.pathname === item.to || location.pathname.startsWith(item.to + '/')
@@ -102,10 +109,10 @@ export const Sidebar = () => {
                   }`}
                 >
                   {item.icon}
-                  <span className="flex-1 text-left">{item.label}</span>
+                  <span className="nav-label flex-1 text-left">{item.label}</span>
                   <ChevronDown
                     size={18}
-                    className={`transition-transform ${
+                    className={`nav-chevron transition-transform ${
                       isExpanded ? 'rotate-180' : ''
                     }`}
                   />
@@ -120,7 +127,7 @@ export const Sidebar = () => {
                   }`}
                 >
                   {item.icon}
-                  <span>{item.label}</span>
+                  <span className="nav-label">{item.label}</span>
                 </Link>
               )}
 

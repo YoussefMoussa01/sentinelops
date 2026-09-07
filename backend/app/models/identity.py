@@ -14,6 +14,7 @@ class User(Base, TimestampMixin):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    role = Column(String(50), default="VIEWER", nullable=False)
 
     # Relationships (will be added in later phases)
     # devices = relationship("Device", back_populates="user")

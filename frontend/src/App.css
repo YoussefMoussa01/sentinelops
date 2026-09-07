@@ -6,8 +6,54 @@ html {
   scroll-behavior: smooth;
 }
 
+:root {
+  --ink: #101827;
+  --canvas: #f3f6f8;
+  --paper: #ffffff;
+  --line: #dbe3e8;
+  --muted: #687686;
+  --cyan: #0d9488;
+  --amber: #d97706;
+  --coral: #e05d44;
+  --violet: #6d5bd0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: Inter, system-ui, sans-serif;
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: 'Space Grotesk', 'Avenir Next', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  background: radial-gradient(circle at 95% 0%, rgba(13, 148, 136, 0.11), transparent 25rem), var(--canvas);
+}
+
+.surface {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: 0 12px 30px rgba(16, 24, 39, 0.06);
+}
+
+.eyebrow {
+  color: var(--cyan);
+  font-family: 'IBM Plex Mono', 'Cascadia Code', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* Custom scrollbar */
@@ -27,4 +73,17 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+@media (max-width: 900px) {
+  .app-shell > aside { width: 5.25rem; }
+  .app-shell > aside .nav-label,
+  .app-shell > aside .brand-copy,
+  .app-shell > aside .nav-chevron { display: none; }
+  .app-shell > aside nav a,
+  .app-shell > aside nav button { justify-content: center; padding-left: 0.75rem; padding-right: 0.75rem; }
+}
+
+@media (max-width: 640px) {
+  .app-shell > aside { display: none; }
 }

@@ -6,11 +6,12 @@ from app.core import NotFoundError, ConflictError
 from app.schemas import UserCreate, UserResponse, UserUpdate, PaginationParams
 from app.services import UserService
 from app.models import User
+from app.api.dependencies import check_permission
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-@router.get("/users", response_model=dict)
+@router.get("/users", response_model=dict, dependencies=[Depends(check_permission("view_users"))])
 async def list_users(
     db: Session = Depends(get_db),
     page: int = 1,
@@ -30,6 +31,7 @@ async def list_users(
                 "username": u.username,
                 "email": u.email,
                 "is_active": u.is_active,
+                "role": u.role,
                 "created_at": u.created_at.isoformat(),
                 "updated_at": u.updated_at.isoformat(),
             }
@@ -46,7 +48,7 @@ async def list_users(
     }
 
 
-@router.post("/users", response_model=dict)
+@router.post("/users", response_model=dict, dependencies=[Depends(check_permission("manage_users"))])
 async def create_user(user_create: UserCreate, db: Session = Depends(get_db)):
     """Create a new user (admin only)."""
     try:
@@ -58,6 +60,7 @@ async def create_user(user_create: UserCreate, db: Session = Depends(get_db)):
                 "username": user.username,
                 "email": user.email,
                 "is_active": user.is_active,
+                "role": user.role,
                 "created_at": user.created_at.isoformat(),
                 "updated_at": user.updated_at.isoformat(),
             },
@@ -69,7 +72,7 @@ async def create_user(user_create: UserCreate, db: Session = Depends(get_db)):
         )
 
 
-@router.patch("/users/{user_id}", response_model=dict)
+@router.patch("/users/{user_id}", response_model=dict, dependencies=[Depends(check_permission("manage_users"))])
 async def update_user(
     user_id: str, user_update: UserUpdate, db: Session = Depends(get_db)
 ):
@@ -83,6 +86,7 @@ async def update_user(
                 "username": user.username,
                 "email": user.email,
                 "is_active": user.is_active,
+                "role": user.role,
                 "created_at": user.created_at.isoformat(),
                 "updated_at": user.updated_at.isoformat(),
             },
@@ -94,7 +98,7 @@ async def update_user(
         )
 
 
-@router.delete("/users/{user_id}")
+@router.delete("/users/{user_id}", dependencies=[Depends(check_permission("manage_users"))])
 async def delete_user(user_id: str, db: Session = Depends(get_db)):
     """Delete user (admin only)."""
     try:
@@ -105,3 +109,23 @@ async def delete_user(user_id: str, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=e.message,
         )
+
+
+@router.get("/users/{user_id}", response_model=dict, dependencies=[Depends(check_permission("view_users"))])
+async def get_user(user_id: str, db: Session = Depends(get_db)):
+    try:
+        user = UserService.get_user_by_id(db, user_id)
+        return {
+            "status": "success",
+            "data": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "is_active": user.is_active,
+                "role": user.role,
+                "created_at": user.created_at.isoformat(),
+                "updated_at": user.updated_at.isoformat(),
+            },
+        }
+    except NotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)

@@ -22,14 +22,19 @@ export const AlertsPage = () => {
   const [severity, setSeverity] = useState('MEDIUM')
   const [source, setSource] = useState('')
   const [saving, setSaving] = useState(false)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [severityFilter, setSeverityFilter] = useState('ALL')
+  const [page, setPage] = useState(0)
+  const pageSize = 20
 
   useEffect(() => {
     loadAlerts()
-  }, [])
+  }, [page])
 
   const loadAlerts = () => {
     setLoading(true)
-    alertsAPI.getAlerts()
+    alertsAPI.getAlerts(page * pageSize, pageSize)
       .then((response) => {
         if (Array.isArray(response)) {
           setAlerts(response as AlertItem[])
@@ -59,6 +64,13 @@ export const AlertsPage = () => {
       setSaving(false)
     }
   }
+
+  const filteredAlerts = alerts.filter((alert) => {
+    const text = `${alert.title} ${alert.description || ''} ${alert.source || ''}`.toLowerCase()
+    return text.includes(search.toLowerCase()) &&
+      (statusFilter === 'ALL' || alert.status === statusFilter) &&
+      (severityFilter === 'ALL' || alert.severity === severityFilter)
+  })
 
   return (
     <div>
@@ -99,11 +111,16 @@ export const AlertsPage = () => {
       {error && <p className="text-red-600">Unable to load alerts: {error}</p>}
       {!loading && !error && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {alerts.length === 0 ? (
+          <div className="grid grid-cols-1 gap-3 border-b border-gray-200 p-4 md:grid-cols-3">
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search alerts" className="rounded border border-gray-300 px-3 py-2" />
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded border border-gray-300 px-3 py-2"><option value="ALL">All statuses</option><option>NEW</option><option>ACKNOWLEDGED</option><option>INVESTIGATING</option><option>RESOLVED</option><option>FALSE_POSITIVE</option></select>
+            <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)} className="rounded border border-gray-300 px-3 py-2"><option value="ALL">All severities</option><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select>
+          </div>
+          {filteredAlerts.length === 0 ? (
             <p className="p-6 text-gray-600">No alerts found.</p>
           ) : (
             <div className="divide-y divide-gray-200">
-              {alerts.map((alert) => (
+              {filteredAlerts.map((alert) => (
                 <Link key={alert.id} to={`/alerts/${alert.id}`} className="block p-5 hover:bg-gray-50">
                   <div className="flex items-center justify-between gap-4">
                     <h2 className="font-semibold text-gray-900">{alert.title}</h2>
@@ -115,6 +132,11 @@ export const AlertsPage = () => {
               ))}
             </div>
           )}
+          <div className="flex items-center justify-between border-t border-gray-200 p-4">
+            <button disabled={page === 0 || loading} onClick={() => setPage(page - 1)} className="rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40">Previous</button>
+            <span className="text-sm text-gray-500">Page {page + 1}</span>
+            <button disabled={alerts.length < pageSize || loading} onClick={() => setPage(page + 1)} className="rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40">Next</button>
+          </div>
         </div>
       )}
     </div>
