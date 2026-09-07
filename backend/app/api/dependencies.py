@@ -6,9 +6,18 @@ from app.core.security import decode_token
 from app.repositories.user_repository import UserRepository
 
 ROLE_PERMISSIONS = {
-    "SOC_ADMIN": {"view_alerts", "view_investigations", "view_users", "view_logs", "use_ai_agent", "manage_users"},
-    "SECURITY_ANALYST": {"view_alerts", "view_investigations", "view_logs", "use_ai_agent"},
-    "INVESTIGATOR": {"view_alerts", "view_investigations", "view_logs", "use_ai_agent"},
+    "SOC_ADMIN": {
+        "view_alerts", "manage_alerts", "view_investigations", "manage_investigations",
+        "view_users", "view_devices", "manage_devices", "view_logs", "use_ai_agent", "manage_users",
+    },
+    "SECURITY_ANALYST": {
+        "view_alerts", "manage_alerts", "view_investigations", "manage_investigations",
+        "view_devices", "manage_devices", "view_logs", "use_ai_agent",
+    },
+    "INVESTIGATOR": {
+        "view_alerts", "manage_alerts", "view_investigations", "manage_investigations",
+        "view_devices", "view_logs", "use_ai_agent",
+    },
     "VIEWER": {"view_alerts", "view_investigations"},
 }
 

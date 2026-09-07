@@ -14,8 +14,8 @@ class DeviceService:
         return DeviceRepository.get_by_id(db, device_id)
 
     @staticmethod
-    def list_devices(db: Session) -> list[Device]:
-        return DeviceRepository.get_all(db)
+    def list_devices(db: Session, skip: int = 0, limit: int = 100) -> list[Device]:
+        return DeviceRepository.get_all(db, skip=skip, limit=limit)
 
     @staticmethod
     def update_device(db: Session, device_id: str, **kwargs) -> Device:

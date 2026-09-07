@@ -19,22 +19,19 @@ from app.schemas import (
     UserCreate,
 )
 from app.services import UserService
+from app.api.dependencies import ROLE_PERMISSIONS
 import logging
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
 
-ROLE_PERMISSIONS = {
-    "SOC_ADMIN": ["view_alerts", "view_investigations", "view_users", "view_logs", "use_ai_agent", "manage_users"],
-    "SECURITY_ANALYST": ["view_alerts", "view_investigations", "view_logs", "use_ai_agent"],
-    "INVESTIGATOR": ["view_alerts", "view_investigations", "view_logs", "use_ai_agent"],
-    "VIEWER": ["view_alerts", "view_investigations"],
-}
-
-
 def user_access(user):
-    return {"role": user.role, "roles": [user.role], "permissions": ROLE_PERMISSIONS.get(user.role, [])}
+    return {
+        "role": user.role,
+        "roles": [user.role],
+        "permissions": sorted(ROLE_PERMISSIONS.get(user.role, set())),
+    }
 
 
 def get_token_from_header(authorization: str = Header(None)) -> str:
@@ -197,7 +194,7 @@ async def get_current_user_info(
             updated_at=user.updated_at,
             role=user.role,
             roles=[user.role],
-            permissions=ROLE_PERMISSIONS.get(user.role, []),
+            permissions=sorted(ROLE_PERMISSIONS.get(user.role, set())),
         )
     except UnauthorizedError as e:
         raise HTTPException(

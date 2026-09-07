@@ -42,13 +42,20 @@ def api_client():
             password_hash="unused-test-hash",
             role="VIEWER",
         )
-        db.add_all([admin, viewer])
+        analyst = User(
+            username="test-analyst",
+            email="test-analyst@example.com",
+            password_hash="unused-test-hash",
+            role="SECURITY_ANALYST",
+        )
+        db.add_all([admin, viewer, analyst])
         db.commit()
         db.refresh(admin)
         db.refresh(viewer)
         tokens = {
             "admin": create_access_token({"sub": admin.id}),
             "viewer": create_access_token({"sub": viewer.id}),
+            "analyst": create_access_token({"sub": analyst.id}),
         }
 
     with TestClient(app) as client:

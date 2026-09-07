@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/features/auth'
+import { ArrowUpRight, Lock, Radar, ShieldCheck } from 'lucide-react'
 
 export const LoginPage = () => {
   const navigate = useNavigate()
@@ -23,41 +24,44 @@ export const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-900 to-brand-600 flex items-center justify-center px-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-brand-900 mb-2">SentinelOps</h1>
-        <p className="text-gray-600 mb-8">AI Cyber Investigation Platform</p>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--ink)] px-4 py-10 text-white">
+      <div className="pointer-events-none absolute inset-0 opacity-30" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
+      <div className="relative grid w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="hidden bg-[var(--ink-soft)] p-10 lg:block"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--cyan)] font-bold text-[var(--ink)]">S</span><span className="text-lg font-bold">SentinelOps</span></div><p className="eyebrow mt-20">Threat response console</p><h2 className="mt-4 max-w-md text-4xl font-bold leading-tight text-white">See the signal.<br />Move with confidence.</h2><p className="mt-5 max-w-sm text-sm leading-6 text-white/60">A focused workspace for triaging alerts, investigating risk and coordinating response.</p><div className="mt-12 space-y-4 text-sm text-white/70"><div className="flex items-center gap-3"><Radar size={18} className="text-[var(--cyan)]" /> Live security posture</div><div className="flex items-center gap-3"><ShieldCheck size={18} className="text-[var(--cyan)]" /> Role-aware access controls</div></div></div>
+        <div className="p-8 text-[var(--ink)] sm:p-12">
+        <div className="mb-8 lg:hidden"><p className="eyebrow">SentinelOps</p><h1 className="mt-2 text-3xl font-bold">Welcome back</h1></div>
+        <div className="mb-8 hidden lg:block"><p className="eyebrow">Secure sign in</p><h1 className="mt-2 text-3xl font-bold">Welcome back</h1><p className="mt-2 text-sm text-[var(--muted)]">Resume your security operations workspace.</p></div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-[var(--ink-soft)]">
               Username
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              className="w-full rounded-lg border border-[var(--line)] bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[var(--cyan)] focus:ring-2 focus:ring-teal-100"
               placeholder="Enter your username"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-[var(--ink-soft)]">
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              className="w-full rounded-lg border border-[var(--line)] bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[var(--cyan)] focus:ring-2 focus:ring-teal-100"
               placeholder="Enter your password"
               disabled={isLoading}
             />
@@ -66,19 +70,20 @@ export const LoginPage = () => {
           <button
             type="submit"
             disabled={isLoading || !username || !password}
-            className="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2 rounded-lg transition disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--ink)] py-3 font-semibold text-white transition hover:bg-[var(--cyan)] hover:text-[var(--ink)] disabled:opacity-50"
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Signing in...' : 'Sign in'} <ArrowUpRight size={17} />
           </button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-gray-200">
+        <div className="mt-8 border-t border-[var(--line)] pt-6">
           <p className="text-sm text-gray-600 text-center">
-            Test credentials: admin / AdminPassword123!
+            <Lock size={14} className="mr-1 inline" /> Test credentials: admin / AdminPassword123!
           </p>
           <p className="mt-4 text-center text-sm text-gray-600">
             Need an account? <Link to="/register" className="font-medium text-brand-600 hover:underline">Create one</Link>
           </p>
+        </div>
         </div>
       </div>
     </div>

@@ -12,6 +12,14 @@ from app.schemas.common import (
     PaginatedResponse,
 )
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, LoginResponse
+from app.schemas.security import (
+    AlertCreate,
+    AlertUpdate,
+    InvestigationCreate,
+    InvestigationUpdate,
+    DeviceCreate,
+    DeviceUpdate,
+)
 
 __all__ = [
     "UserBase",
@@ -28,4 +36,10 @@ __all__ = [
     "RegisterRequest",
     "TokenResponse",
     "LoginResponse",
+    "AlertCreate",
+    "AlertUpdate",
+    "InvestigationCreate",
+    "InvestigationUpdate",
+    "DeviceCreate",
+    "DeviceUpdate",
 ]

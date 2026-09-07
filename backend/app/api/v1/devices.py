@@ -1,9 +1,10 @@
 """Device API routes."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.device_service import DeviceService
 from app.api.dependencies import check_permission
+from app.schemas import DeviceCreate, DeviceUpdate
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 
@@ -15,31 +16,35 @@ def serialize(device):
             "created_at": device.created_at.isoformat(), "updated_at": device.updated_at.isoformat()}
 
 
-@router.get("", response_model=list[dict], dependencies=[Depends(check_permission("view_users"))])
-async def list_devices(db: Session = Depends(get_db)):
-    return [serialize(device) for device in DeviceService.list_devices(db)]
+@router.get("", response_model=list[dict], dependencies=[Depends(check_permission("view_devices"))])
+async def list_devices(
+    db: Session = Depends(get_db),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    return [serialize(device) for device in DeviceService.list_devices(db, skip=skip, limit=limit)]
 
 
-@router.get("/{device_id}", response_model=dict, dependencies=[Depends(check_permission("view_users"))])
+@router.get("/{device_id}", response_model=dict, dependencies=[Depends(check_permission("view_devices"))])
 async def get_device(device_id: str, db: Session = Depends(get_db)):
     return serialize(DeviceService.get_device(db, device_id))
 
 
-@router.post("", response_model=dict, dependencies=[Depends(check_permission("view_users"))])
-async def create_device(payload: dict, db: Session = Depends(get_db)):
+@router.post("", response_model=dict, dependencies=[Depends(check_permission("manage_devices"))])
+async def create_device(payload: DeviceCreate, db: Session = Depends(get_db)):
     device = DeviceService.create_device(
-        db, hostname=payload.get("hostname", "New device"), ip_address=payload.get("ip_address"),
-        device_type=payload.get("device_type", "WORKSTATION"), operating_system=payload.get("operating_system"),
-        status=payload.get("status", "ACTIVE"), last_seen=None)
+        db, **payload.model_dump(), last_seen=None)
     return serialize(device)
 
 
-@router.patch("/{device_id}", response_model=dict, dependencies=[Depends(check_permission("view_users"))])
-async def update_device(device_id: str, payload: dict, db: Session = Depends(get_db)):
-    return serialize(DeviceService.update_device(db, device_id, **payload))
+@router.patch("/{device_id}", response_model=dict, dependencies=[Depends(check_permission("manage_devices"))])
+async def update_device(device_id: str, payload: DeviceUpdate, db: Session = Depends(get_db)):
+    return serialize(
+        DeviceService.update_device(db, device_id, **payload.model_dump(exclude_unset=True))
+    )
 
 
-@router.delete("/{device_id}", dependencies=[Depends(check_permission("view_users"))])
+@router.delete("/{device_id}", dependencies=[Depends(check_permission("manage_devices"))])
 async def delete_device(device_id: str, db: Session = Depends(get_db)):
     DeviceService.delete_device(db, device_id)
     return {"status": "success", "message": "Device deleted"}

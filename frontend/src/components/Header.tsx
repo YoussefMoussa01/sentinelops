@@ -1,28 +1,33 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
+import { Bell, ChevronDown, LogOut, Search } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 
 export const Header = () => {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const pageName = location.pathname === '/dashboard'
+    ? 'Command overview'
+    : location.pathname.split('/').filter(Boolean).map((part) => part.replace(/-/g, ' ')).join(' / ')
 
   return (
-    <header className="border-b border-[var(--line)] bg-white/90 text-[var(--ink)] backdrop-blur">
-      <div className="flex items-center justify-between px-6 py-4">
-        <div><p className="eyebrow">Security operations center</p><p className="mt-1 text-sm font-semibold">{location.pathname === '/dashboard' ? 'Command overview' : location.pathname.replace('/', '').replace(/\//g, ' / ')}</p></div>
+    <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-white/85 text-[var(--ink)] backdrop-blur">
+      <div className="flex min-h-[4.75rem] items-center justify-between gap-4 px-4 md:px-7">
+        <div className="min-w-0"><p className="eyebrow">Security operations center</p><p className="mt-1 truncate text-sm font-semibold capitalize">{pageName}</p></div>
 
         <div className="flex items-center gap-4">
+          <button aria-label="Search workspace" className="hidden h-9 w-9 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--muted)] transition hover:border-[var(--cyan)] hover:text-[var(--cyan)] sm:flex"><Search size={16} /></button>
+          <button aria-label="Notifications" className="relative hidden h-9 w-9 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--muted)] transition hover:border-[var(--cyan)] hover:text-[var(--cyan)] sm:flex"><Bell size={16} /><span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--coral)]" /></button>
           {user && (
             <div className="flex items-center gap-2">
               <span className="hidden text-right sm:block"><span className="block text-sm font-semibold">{user.username}</span><span className="font-mono text-[10px] uppercase text-[var(--muted)]">{user.roles?.[0] || 'operator'}</span></span>
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--ink)] text-sm font-bold text-white hover:bg-[var(--cyan)]"
+                  className="flex items-center gap-2 rounded-full border border-[var(--line)] p-1 pr-2 transition hover:border-[var(--cyan)]"
                 >
-                  {user.username.slice(0, 1).toUpperCase()}
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--ink)] text-sm font-bold text-white">{user.username.slice(0, 1).toUpperCase()}</span><ChevronDown size={14} className="text-[var(--muted)]" />
                 </button>
                 {showUserMenu && (
                   <div className="absolute right-0 z-10 mt-2 w-56 rounded border border-[var(--line)] bg-white text-[var(--ink)] shadow-xl">

@@ -15,6 +15,8 @@ class UserStub:
         ("SOC_ADMIN", "manage_users"),
         ("SOC_ADMIN", "use_ai_agent"),
         ("SECURITY_ANALYST", "view_logs"),
+        ("SECURITY_ANALYST", "manage_alerts"),
+        ("SECURITY_ANALYST", "view_devices"),
         ("INVESTIGATOR", "view_investigations"),
         ("VIEWER", "view_alerts"),
     ],
@@ -28,6 +30,8 @@ def test_role_grants_expected_permission(role: str, permission: str):
     [
         ("VIEWER", "manage_users"),
         ("VIEWER", "view_logs"),
+        ("VIEWER", "manage_alerts"),
+        ("VIEWER", "view_devices"),
         ("INVESTIGATOR", "manage_users"),
         ("SECURITY_ANALYST", "view_users"),
         ("UNKNOWN", "view_alerts"),

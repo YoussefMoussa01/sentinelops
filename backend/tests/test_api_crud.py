@@ -62,6 +62,29 @@ def test_viewer_cannot_manage_users(api_client):
     assert response.status_code == 403
 
 
+def test_viewer_can_read_but_cannot_change_security_records(api_client):
+    client, tokens = api_client
+    client.headers.update({"Authorization": f"Bearer {tokens['viewer']}"})
+
+    assert client.get("/api/v1/alerts").status_code == 200
+    assert client.get("/api/v1/investigations").status_code == 200
+    assert client.post("/api/v1/alerts", json={"title": "Viewer alert"}).status_code == 403
+    assert client.post("/api/v1/investigations", json={"title": "Viewer investigation"}).status_code == 403
+
+
+def test_security_analyst_can_access_devices(api_client):
+    client, tokens = api_client
+    client.headers.update({"Authorization": f"Bearer {tokens['analyst']}"})
+    assert client.get("/api/v1/devices").status_code == 200
+
+
+def test_security_domain_validates_request_payloads(api_client):
+    client, _ = api_client
+    assert client.post("/api/v1/alerts", json={"title": "", "severity": "URGENT"}).status_code == 422
+    assert client.post("/api/v1/investigations", json={"title": "Case", "risk_score": 101}).status_code == 422
+    assert client.post("/api/v1/devices", json={"hostname": "workstation", "ip_address": "not-an-ip"}).status_code == 422
+
+
 def test_public_registration_creates_viewer_and_returns_tokens(api_client):
     client, _ = api_client
     client.headers.pop("Authorization", None)

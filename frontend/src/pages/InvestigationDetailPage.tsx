@@ -106,27 +106,27 @@ export const InvestigationDetailPage = () => {
   }
 
   return (
-    <div>
-      <Link to="/investigations" className="text-sm text-brand-600 hover:underline">Back to investigations</Link>
-      <h1 className="text-3xl font-bold text-gray-900 mt-3 mb-6">Investigation Details</h1>
+    <div className="detail-shell space-y-6">
+      <Link to="/investigations" className="text-sm font-semibold text-[var(--cyan)] hover:text-[var(--ink)]">Back to investigations</Link>
+      <div className="page-hero rounded-2xl p-6 text-white md:p-8"><div className="relative z-10 flex flex-wrap items-end justify-between gap-5"><div><p className="eyebrow text-[var(--cyan)]">Case workspace</p><h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">{investigation?.title || 'Investigation details'}</h1><p className="mt-2 text-sm text-white/65">Review evidence, related alerts and the investigation timeline.</p></div>{investigation && <span className={`status-chip status-chip--${investigation.status.toLowerCase()}`}>{investigation.status}</span>}</div></div>
       {loading && <p className="text-gray-600">Loading investigation...</p>}
       {error && <p className="text-red-600">Unable to load investigation: {error}</p>}
       {!loading && !error && investigation && (
-        <div className="bg-white rounded-lg shadow p-6 space-y-5">
+        <div className="detail-panel p-6 space-y-6">
           <div className="flex justify-end gap-3">
-            <button onClick={() => setEditing(!editing)} className="rounded border border-gray-300 px-3 py-2 text-sm">{editing ? 'Cancel' : 'Edit'}</button>
-            <button onClick={deleteInvestigation} className="rounded bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700">Delete</button>
+            <button onClick={() => setEditing(!editing)} className="btn-primary text-sm">{editing ? 'Cancel' : 'Edit'}</button>
+            <button onClick={deleteInvestigation} className="btn-danger text-sm">Delete</button>
           </div>
           {editing && (
-            <form onSubmit={updateInvestigation} className="space-y-4 border-b pb-5">
-              <input name="title" required defaultValue={investigation.title} className="w-full rounded border border-gray-300 px-3 py-2" />
-              <textarea name="description" defaultValue={investigation.description} className="w-full rounded border border-gray-300 px-3 py-2" rows={3} />
+            <form onSubmit={updateInvestigation} className="space-y-4 border-b border-[var(--line)] pb-6">
+              <input name="title" required defaultValue={investigation.title} className="field-control" />
+              <textarea name="description" defaultValue={investigation.description} className="field-control" rows={3} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <select name="severity" defaultValue={investigation.severity} className="rounded border border-gray-300 px-3 py-2"><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select>
-                <select name="status" defaultValue={investigation.status} className="rounded border border-gray-300 px-3 py-2"><option>OPEN</option><option>CLOSED</option><option>ARCHIVED</option></select>
-                <input name="risk_score" type="number" min="0" max="100" step="0.1" defaultValue={investigation.risk_score} className="rounded border border-gray-300 px-3 py-2" />
+                <select name="severity" defaultValue={investigation.severity} className="field-control"><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select>
+                <select name="status" defaultValue={investigation.status} className="field-control"><option>OPEN</option><option>CLOSED</option><option>ARCHIVED</option></select>
+                <input name="risk_score" type="number" min="0" max="100" step="0.1" defaultValue={investigation.risk_score} className="field-control" />
               </div>
-              <button disabled={saving} type="submit" className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50">{saving ? 'Saving...' : 'Save changes'}</button>
+              <button disabled={saving} type="submit" className="btn-primary disabled:opacity-50">{saving ? 'Saving...' : 'Save changes'}</button>
             </form>
           )}
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -135,8 +135,8 @@ export const InvestigationDetailPage = () => {
               <p className="mt-2 text-gray-600">{investigation.description || 'No description'}</p>
             </div>
             <div className="text-right">
-              <p className="font-semibold text-gray-900">Risk {investigation.risk_score}</p>
-              <p className="text-sm text-gray-500">{investigation.status}</p>
+              <p className="font-semibold text-[var(--violet)]">Risk {investigation.risk_score}</p>
+              <p className={`status-chip status-chip--${investigation.status.toLowerCase()}`}>{investigation.status}</p>
             </div>
           </div>
           <dl className="grid grid-cols-1 gap-4 border-t pt-5 sm:grid-cols-2">

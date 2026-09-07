@@ -5,6 +5,7 @@ from app.database import get_db
 from app.services.investigation_service import InvestigationService
 from app.api.dependencies import check_permission
 from app.models import Alert
+from app.schemas import InvestigationCreate, InvestigationUpdate
 
 router = APIRouter(prefix="/investigations", tags=["investigations"])
 
@@ -70,16 +71,11 @@ async def get_investigation_timeline(investigation_id: str, db: Session = Depend
     return sorted(events, key=lambda event: event["timestamp"])
 
 
-@router.post("", response_model=dict, dependencies=[Depends(check_permission("view_investigations"))])
-async def create_investigation(payload: dict, db: Session = Depends(get_db)):
+@router.post("", response_model=dict, dependencies=[Depends(check_permission("manage_investigations"))])
+async def create_investigation(payload: InvestigationCreate, db: Session = Depends(get_db)):
     investigation = InvestigationService.create_investigation(
         db,
-        title=payload.get("title", "New investigation"),
-        description=payload.get("description"),
-        severity=payload.get("severity", "MEDIUM"),
-        risk_score=float(payload.get("risk_score", 0.0)),
-        status=payload.get("status", "OPEN"),
-        created_by=payload.get("created_by"),
+        **payload.model_dump(),
     )
     return {
         "id": investigation.id,
@@ -91,9 +87,13 @@ async def create_investigation(payload: dict, db: Session = Depends(get_db)):
     }
 
 
-@router.patch("/{investigation_id}", response_model=dict, dependencies=[Depends(check_permission("view_investigations"))])
-async def update_investigation(investigation_id: str, payload: dict, db: Session = Depends(get_db)):
-    investigation = InvestigationService.update_investigation(db, investigation_id, **payload)
+@router.patch("/{investigation_id}", response_model=dict, dependencies=[Depends(check_permission("manage_investigations"))])
+async def update_investigation(
+    investigation_id: str, payload: InvestigationUpdate, db: Session = Depends(get_db)
+):
+    investigation = InvestigationService.update_investigation(
+        db, investigation_id, **payload.model_dump(exclude_unset=True)
+    )
     return {
         "id": investigation.id,
         "title": investigation.title,
@@ -104,7 +104,7 @@ async def update_investigation(investigation_id: str, payload: dict, db: Session
     }
 
 
-@router.delete("/{investigation_id}", dependencies=[Depends(check_permission("view_investigations"))])
+@router.delete("/{investigation_id}", dependencies=[Depends(check_permission("manage_investigations"))])
 async def delete_investigation(investigation_id: str, db: Session = Depends(get_db)):
     InvestigationService.delete_investigation(db, investigation_id)
     return {"status": "success", "message": "Investigation deleted"}

@@ -1,11 +1,10 @@
 """Alert API routes."""
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.alert_service import AlertService
 from app.api.dependencies import check_permission
+from app.schemas import AlertCreate, AlertUpdate
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
@@ -54,24 +53,11 @@ async def get_alert(alert_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
-@router.post("", response_model=dict, dependencies=[Depends(check_permission("view_alerts"))])
-async def create_alert(payload: dict, db: Session = Depends(get_db)):
-    detection_time = payload.get("detection_time")
-    if detection_time and isinstance(detection_time, str):
-        detection_time = datetime.fromisoformat(detection_time.replace("Z", "+00:00"))
-
+@router.post("", response_model=dict, dependencies=[Depends(check_permission("manage_alerts"))])
+async def create_alert(payload: AlertCreate, db: Session = Depends(get_db)):
     alert = AlertService.create_alert(
         db,
-        title=payload.get("title", "New alert"),
-        description=payload.get("description"),
-        severity=payload.get("severity", "MEDIUM"),
-        status=payload.get("status", "NEW"),
-        source=payload.get("source"),
-        detection_time=detection_time,
-        user_id=payload.get("user_id"),
-        device_id=payload.get("device_id"),
-        ip_address=payload.get("ip_address"),
-        investigation_id=payload.get("investigation_id"),
+        **payload.model_dump(),
     )
     return {
         "id": alert.id,
@@ -85,9 +71,9 @@ async def create_alert(payload: dict, db: Session = Depends(get_db)):
     }
 
 
-@router.patch("/{alert_id}", response_model=dict, dependencies=[Depends(check_permission("view_alerts"))])
-async def update_alert(alert_id: str, payload: dict, db: Session = Depends(get_db)):
-    alert = AlertService.update_alert(db, alert_id, **payload)
+@router.patch("/{alert_id}", response_model=dict, dependencies=[Depends(check_permission("manage_alerts"))])
+async def update_alert(alert_id: str, payload: AlertUpdate, db: Session = Depends(get_db)):
+    alert = AlertService.update_alert(db, alert_id, **payload.model_dump(exclude_unset=True))
     return {
         "id": alert.id,
         "title": alert.title,
@@ -99,7 +85,7 @@ async def update_alert(alert_id: str, payload: dict, db: Session = Depends(get_d
     }
 
 
-@router.delete("/{alert_id}", dependencies=[Depends(check_permission("view_alerts"))])
+@router.delete("/{alert_id}", dependencies=[Depends(check_permission("manage_alerts"))])
 async def delete_alert(alert_id: str, db: Session = Depends(get_db)):
     AlertService.delete_alert(db, alert_id)
     return {"status": "success", "message": "Alert deleted"}

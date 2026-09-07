@@ -4,7 +4,7 @@ import {
   FileText,
   Users,
   Server,
-  LogOut,
+  ScrollText,
   BarChart3,
   Zap,
   Settings,
@@ -24,7 +24,7 @@ interface NavItem {
 export const Sidebar = () => {
   const location = useLocation()
   const { user } = useAuth()
-  const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Security Data'])
 
   const toggleExpand = (label: string) => {
     setExpandedItems((prev) =>
@@ -52,16 +52,16 @@ export const Sidebar = () => {
       label: 'Security Data',
       to: '#',
       icon: <Server size={20} />,
-      requiredPermission: 'view_users',
+      requiredPermission: 'view_devices',
       subItems: [
-        { label: 'Users', to: '/users', icon: <Users size={18} /> },
-        { label: 'Devices', to: '/devices', icon: <Server size={18} /> },
+        { label: 'Users', to: '/users', icon: <Users size={18} />, requiredPermission: 'view_users' },
+        { label: 'Devices', to: '/devices', icon: <Server size={18} />, requiredPermission: 'view_devices' },
       ],
     },
     {
       label: 'Logs',
       to: '/logs',
-      icon: <LogOut size={20} />,
+      icon: <ScrollText size={20} />,
       requiredPermission: 'view_logs',
     },
     {
@@ -104,8 +104,8 @@ export const Sidebar = () => {
                   onClick={() => toggleExpand(item.label)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
                     isActive
-                      ? 'bg-brand-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800'
+                      ? 'bg-[var(--cyan)] text-[var(--ink)] shadow-lg shadow-teal-950/20'
+                      : 'text-gray-300 hover:bg-white/10'
                   }`}
                 >
                   {item.icon}
@@ -122,8 +122,8 @@ export const Sidebar = () => {
                   to={item.to}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
                     isActive
-                      ? 'bg-brand-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800'
+                    ? 'bg-[var(--cyan)] text-[var(--ink)] shadow-lg shadow-teal-950/20'
+                    : 'text-gray-300 hover:bg-white/10'
                   }`}
                 >
                   {item.icon}
@@ -133,18 +133,18 @@ export const Sidebar = () => {
 
               {item.subItems && isExpanded && (
                 <div className="ml-4 space-y-1 mt-1 border-l border-gray-700 pl-3">
-                  {item.subItems.map((subItem) => (
+                  {item.subItems.filter((subItem) => !subItem.requiredPermission || user?.permissions?.includes(subItem.requiredPermission)).map((subItem) => (
                     <Link
                       key={subItem.to}
                       to={subItem.to}
                       className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition ${
                         location.pathname === subItem.to
-                          ? 'bg-brand-600 text-white'
-                          : 'text-gray-400 hover:bg-gray-800'
+                          ? 'bg-white/10 text-white'
+                          : 'text-gray-400 hover:bg-white/10'
                       }`}
                     >
                       {subItem.icon}
-                      <span>{subItem.label}</span>
+                      <span className="nav-label">{subItem.label}</span>
                     </Link>
                   ))}
                 </div>
