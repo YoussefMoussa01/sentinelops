@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Literal, Optional
 from datetime import datetime
 
 
@@ -14,7 +14,7 @@ class UserCreate(UserBase):
     """User creation schema."""
 
     password: str = Field(..., min_length=8)
-    role: str = "VIEWER"
+    role: Literal["SUPER_ADMIN", "SOC_ADMIN", "SECURITY_ANALYST", "INVESTIGATOR", "VIEWER"] = "VIEWER"
 
 
 class UserUpdate(BaseModel):
@@ -22,7 +22,7 @@ class UserUpdate(BaseModel):
 
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = None
-    role: Optional[str] = None
+    role: Optional[Literal["SUPER_ADMIN", "SOC_ADMIN", "SECURITY_ANALYST", "INVESTIGATOR", "VIEWER"]] = None
 
 
 class UserResponse(UserBase):

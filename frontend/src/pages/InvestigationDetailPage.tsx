@@ -29,6 +29,9 @@ interface TimelineEvent {
   timestamp: string
 }
 
+interface EvidenceItem { id: string; title: string; description?: string; evidence_type: string; source?: string; reference?: string; created_at: string }
+interface NoteItem { id: string; content: string; created_at: string }
+
 export const InvestigationDetailPage = () => {
   const { investigationId } = useParams<{ investigationId: string }>()
   const [investigation, setInvestigation] = useState<InvestigationDetails | null>(null)
@@ -40,6 +43,12 @@ export const InvestigationDetailPage = () => {
   const [selectedAlertId, setSelectedAlertId] = useState('')
   const [linking, setLinking] = useState(false)
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
+  const [evidence, setEvidence] = useState<EvidenceItem[]>([])
+  const [notes, setNotes] = useState<NoteItem[]>([])
+  const [noteContent, setNoteContent] = useState('')
+  const [evidenceTitle, setEvidenceTitle] = useState('')
+  const [evidenceReference, setEvidenceReference] = useState('')
+  const [resourceSaving, setResourceSaving] = useState(false)
 
   useEffect(() => {
     if (!investigationId) return
@@ -54,7 +63,31 @@ export const InvestigationDetailPage = () => {
     investigationsAPI.getInvestigationTimeline(investigationId).then((response) => {
       if (Array.isArray(response)) setTimeline(response as TimelineEvent[])
     })
+    investigationsAPI.getEvidence(investigationId).then((response) => { if (Array.isArray(response)) setEvidence(response as EvidenceItem[]) })
+    investigationsAPI.getNotes(investigationId).then((response) => { if (Array.isArray(response)) setNotes(response as NoteItem[]) })
   }, [investigationId])
+
+  const addNote = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!investigationId || !noteContent.trim()) return
+    setResourceSaving(true)
+    try {
+      const created = await investigationsAPI.createNote(investigationId, { content: noteContent }) as NoteItem
+      setNotes((current) => [created, ...current]); setNoteContent('')
+    } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unable to add note') }
+    finally { setResourceSaving(false) }
+  }
+
+  const addEvidence = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!investigationId || !evidenceTitle.trim()) return
+    setResourceSaving(true)
+    try {
+      const created = await investigationsAPI.createEvidence(investigationId, { title: evidenceTitle, reference: evidenceReference || undefined, evidence_type: 'REFERENCE' }) as EvidenceItem
+      setEvidence((current) => [created, ...current]); setEvidenceTitle(''); setEvidenceReference('')
+    } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unable to add evidence') }
+    finally { setResourceSaving(false) }
+  }
 
   const linkAlert = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -166,6 +199,18 @@ export const InvestigationDetailPage = () => {
               <button disabled={!selectedAlertId || linking} type="submit" className="rounded bg-brand-600 px-4 py-2 text-white disabled:opacity-50">{linking ? 'Linking...' : 'Link alert'}</button>
             </form>
           </section>
+          <div className="grid grid-cols-1 gap-6 border-t border-[var(--line)] pt-6 lg:grid-cols-2">
+            <section>
+              <div className="flex items-center justify-between"><div><p className="eyebrow">Case record</p><h3 className="mt-1 text-lg font-semibold text-[var(--ink)]">Investigation notes</h3></div><span className="status-chip status-chip--low">{notes.length}</span></div>
+              <form onSubmit={addNote} className="mt-4 space-y-3"><textarea value={noteContent} onChange={(event) => setNoteContent(event.target.value)} placeholder="Record an observation or next step..." rows={3} className="field-control" /><button disabled={resourceSaving || !noteContent.trim()} type="submit" className="btn-primary disabled:opacity-50">Add note</button></form>
+              <div className="mt-4 space-y-3">{notes.length === 0 ? <p className="text-sm text-[var(--muted)]">No notes recorded yet.</p> : notes.map((note) => <article key={note.id} className="rounded-xl border border-[var(--line)] bg-slate-50/70 p-3"><p className="text-sm leading-6 text-[var(--ink-soft)]">{note.content}</p><p className="mt-2 font-mono text-[10px] text-[var(--muted)]">{note.created_at}</p></article>)}</div>
+            </section>
+            <section>
+              <div className="flex items-center justify-between"><div><p className="eyebrow">Collected material</p><h3 className="mt-1 text-lg font-semibold text-[var(--ink)]">Evidence</h3></div><span className="status-chip status-chip--low">{evidence.length}</span></div>
+              <form onSubmit={addEvidence} className="mt-4 space-y-3"><input required value={evidenceTitle} onChange={(event) => setEvidenceTitle(event.target.value)} placeholder="Evidence title" className="field-control" /><input value={evidenceReference} onChange={(event) => setEvidenceReference(event.target.value)} placeholder="Reference, URL or case ID" className="field-control" /><button disabled={resourceSaving || !evidenceTitle.trim()} type="submit" className="btn-primary disabled:opacity-50">Add evidence</button></form>
+              <div className="mt-4 space-y-3">{evidence.length === 0 ? <p className="text-sm text-[var(--muted)]">No evidence collected yet.</p> : evidence.map((item) => <article key={item.id} className="rounded-xl border border-[var(--line)] bg-slate-50/70 p-3"><p className="font-semibold text-[var(--ink)]">{item.title}</p><p className="mt-1 text-xs text-[var(--muted)]">{item.reference || 'No reference'} - {item.evidence_type}</p></article>)}</div>
+            </section>
+          </div>
           <section className="border-t pt-5">
             <h3 className="text-lg font-semibold text-gray-900">Investigation timeline</h3>
             <div className="mt-4 space-y-4 border-l-2 border-gray-200 pl-5">

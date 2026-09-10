@@ -58,6 +58,10 @@ export const investigationsAPI = {
   deleteInvestigation: async (id: string) => {
     return apiClient.delete(`/investigations/${id}`)
   },
+  getEvidence: async (id: string) => apiClient.get(`/investigations/${id}/evidence`),
+  createEvidence: async (id: string, data: unknown) => apiClient.post(`/investigations/${id}/evidence`, data),
+  getNotes: async (id: string) => apiClient.get(`/investigations/${id}/notes`),
+  createNote: async (id: string, data: unknown) => apiClient.post(`/investigations/${id}/notes`, data),
 }
 
 // Dashboard API
@@ -129,7 +133,17 @@ export const aiAPI = {
   sendMessage: async (conversationId: string, message: string) => {
     return apiClient.post(`/ai/conversations/${conversationId}/messages`, { message })
   },
-  queryAssistant: async (message: string) => {
-    return apiClient.post('/ai/query', { message })
+  queryAssistant: async (message: string, context?: string, history?: unknown[]) => {
+    return apiClient.post('/ai/query', { message, context, history })
   },
+}
+
+// IP intelligence API
+export const ipAddressesAPI = {
+  getIPAddresses: async (skip = 0, limit = 20) => apiClient.get('/ip-addresses', { skip, limit }),
+  getIPAddress: async (id: string) => apiClient.get(`/ip-addresses/${id}`),
+  createIPAddress: async (data: unknown) => apiClient.post('/ip-addresses', data),
+  updateIPAddress: async (id: string, data: unknown) => apiClient.patch(`/ip-addresses/${id}`, data),
+  deleteIPAddress: async (id: string) => apiClient.delete(`/ip-addresses/${id}`),
+  addLocation: async (id: string, data: unknown) => apiClient.post(`/ip-addresses/${id}/locations`, data),
 }

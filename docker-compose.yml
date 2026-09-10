@@ -27,6 +27,8 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: sentinelops-backend
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql://sentinelops:sentinelops_pass@postgres:5432/sentinelops_db
       JWT_SECRET_KEY: test-secret-key-change-in-production

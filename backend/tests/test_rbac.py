@@ -12,6 +12,8 @@ class UserStub:
 @pytest.mark.parametrize(
     ("role", "permission"),
     [
+        ("SUPER_ADMIN", "manage_super_admins"),
+        ("SUPER_ADMIN", "manage_users"),
         ("SOC_ADMIN", "manage_users"),
         ("SOC_ADMIN", "use_ai_agent"),
         ("SECURITY_ANALYST", "view_logs"),
@@ -35,6 +37,7 @@ def test_role_grants_expected_permission(role: str, permission: str):
         ("INVESTIGATOR", "manage_users"),
         ("SECURITY_ANALYST", "view_users"),
         ("UNKNOWN", "view_alerts"),
+        ("SOC_ADMIN", "manage_super_admins"),
     ],
 )
 def test_role_denies_unassigned_permission(role: str, permission: str):
@@ -43,6 +46,7 @@ def test_role_denies_unassigned_permission(role: str, permission: str):
 
 def test_permission_matrix_contains_only_known_roles():
     assert set(ROLE_PERMISSIONS) == {
+        "SUPER_ADMIN",
         "SOC_ADMIN",
         "SECURITY_ANALYST",
         "INVESTIGATOR",

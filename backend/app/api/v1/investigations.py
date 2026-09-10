@@ -1,5 +1,5 @@
 """Investigation API routes."""
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.investigation_service import InvestigationService
@@ -35,21 +35,18 @@ async def list_investigations(
 
 @router.get("/{investigation_id}", response_model=dict, dependencies=[Depends(check_permission("view_investigations"))])
 async def get_investigation(investigation_id: str, db: Session = Depends(get_db)):
-    try:
-        investigation = InvestigationService.get_investigation(db, investigation_id)
-        return {
-            "id": investigation.id,
-            "title": investigation.title,
-            "description": investigation.description,
-            "severity": investigation.severity,
-            "status": investigation.status,
-            "risk_score": investigation.risk_score,
-            "created_by": investigation.created_by,
-            "created_at": investigation.created_at.isoformat(),
-            "updated_at": investigation.updated_at.isoformat(),
-        }
-    except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    investigation = InvestigationService.get_investigation(db, investigation_id)
+    return {
+        "id": investigation.id,
+        "title": investigation.title,
+        "description": investigation.description,
+        "severity": investigation.severity,
+        "status": investigation.status,
+        "risk_score": investigation.risk_score,
+        "created_by": investigation.created_by,
+        "created_at": investigation.created_at.isoformat(),
+        "updated_at": investigation.updated_at.isoformat(),
+    }
 
 
 @router.get("/{investigation_id}/timeline", response_model=list[dict], dependencies=[Depends(check_permission("view_investigations"))])
@@ -83,6 +80,7 @@ async def create_investigation(payload: InvestigationCreate, db: Session = Depen
         "description": investigation.description,
         "severity": investigation.severity,
         "status": investigation.status,
+        "created_by": investigation.created_by,
         "risk_score": investigation.risk_score,
     }
 
@@ -100,6 +98,7 @@ async def update_investigation(
         "description": investigation.description,
         "severity": investigation.severity,
         "status": investigation.status,
+        "created_by": investigation.created_by,
         "risk_score": investigation.risk_score,
     }
 

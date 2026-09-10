@@ -25,9 +25,19 @@ class Settings(BaseSettings):
     # AI
     AI_PROVIDER: str = "openrouter"
     OPENROUTER_API_KEY: str = ""
-    AI_MODEL: str = "openai/gpt-4"
+    AI_MODEL: str = "google/gemma-4-26b-a4b-it:free"
+    # Comma-separated OpenRouter model IDs tried after the primary model fails.
+    AI_FALLBACK_MODELS: str = ""
     AI_TEMPERATURE: float = 0.7
-    AI_MAX_TOKENS: int = 2000
+    AI_MAX_TOKENS: int = 900
+    AI_MAX_INPUT_CHARS: int = 1600
+    AI_MAX_CONTEXT_CHARS: int = 600
+    AI_TIMEOUT_SECONDS: float = 30.0
+    AI_RETRY_ATTEMPTS: int = 2
+    AI_RETRY_BACKOFF_SECONDS: float = 2.0
+    AI_SITE_URL: str = ""
+    AI_SITE_NAME: str = "SentinelOps"
+    AI_REASONING_ENABLED: bool = False
 
     # Logging
     LOG_LEVEL: str = "INFO"
@@ -39,6 +49,11 @@ class Settings(BaseSettings):
 
     # Environment
     ENVIRONMENT: str = "development"
+
+    # Optional idempotent bootstrap for the first super administrator.
+    SUPER_ADMIN_USERNAME: str = ""
+    SUPER_ADMIN_EMAIL: str = ""
+    SUPER_ADMIN_PASSWORD: str = ""
 
     class Config:
         env_file = ".env"

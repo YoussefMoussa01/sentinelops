@@ -1,5 +1,5 @@
 """Alert API routes."""
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.alert_service import AlertService
@@ -24,6 +24,8 @@ async def list_alerts(
             "severity": alert.severity,
             "status": alert.status,
             "source": alert.source,
+            "user_id": alert.user_id,
+            "device_id": alert.device_id,
             "investigation_id": alert.investigation_id,
             "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
             "created_at": alert.created_at.isoformat(),
@@ -35,22 +37,21 @@ async def list_alerts(
 
 @router.get("/{alert_id}", response_model=dict, dependencies=[Depends(check_permission("view_alerts"))])
 async def get_alert(alert_id: str, db: Session = Depends(get_db)):
-    try:
-        alert = AlertService.get_alert(db, alert_id)
-        return {
-            "id": alert.id,
-            "title": alert.title,
-            "description": alert.description,
-            "severity": alert.severity,
-            "status": alert.status,
-            "source": alert.source,
-            "investigation_id": alert.investigation_id,
-            "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
-            "created_at": alert.created_at.isoformat(),
-            "updated_at": alert.updated_at.isoformat(),
-        }
-    except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    alert = AlertService.get_alert(db, alert_id)
+    return {
+        "id": alert.id,
+        "title": alert.title,
+        "description": alert.description,
+        "severity": alert.severity,
+        "status": alert.status,
+        "source": alert.source,
+        "user_id": alert.user_id,
+        "device_id": alert.device_id,
+        "investigation_id": alert.investigation_id,
+        "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
+        "created_at": alert.created_at.isoformat(),
+        "updated_at": alert.updated_at.isoformat(),
+    }
 
 
 @router.post("", response_model=dict, dependencies=[Depends(check_permission("manage_alerts"))])
@@ -66,6 +67,8 @@ async def create_alert(payload: AlertCreate, db: Session = Depends(get_db)):
         "severity": alert.severity,
         "status": alert.status,
         "source": alert.source,
+        "user_id": alert.user_id,
+        "device_id": alert.device_id,
         "investigation_id": alert.investigation_id,
         "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
     }
@@ -81,6 +84,8 @@ async def update_alert(alert_id: str, payload: AlertUpdate, db: Session = Depend
         "severity": alert.severity,
         "status": alert.status,
         "source": alert.source,
+        "user_id": alert.user_id,
+        "device_id": alert.device_id,
         "investigation_id": alert.investigation_id,
     }
 

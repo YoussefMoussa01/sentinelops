@@ -9,6 +9,7 @@ import {
   Zap,
   Settings,
   ChevronDown,
+  Globe2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/features/auth'
@@ -56,6 +57,7 @@ export const Sidebar = () => {
       subItems: [
         { label: 'Users', to: '/users', icon: <Users size={18} />, requiredPermission: 'view_users' },
         { label: 'Devices', to: '/devices', icon: <Server size={18} />, requiredPermission: 'view_devices' },
+        { label: 'IP intelligence', to: '/ip-addresses', icon: <Globe2 size={18} />, requiredPermission: 'view_ip_addresses' },
       ],
     },
     {

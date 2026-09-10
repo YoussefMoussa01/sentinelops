@@ -10,7 +10,7 @@ router = APIRouter(prefix="/devices", tags=["devices"])
 
 
 def serialize(device):
-    return {"id": device.id, "hostname": device.hostname, "ip_address": device.ip_address,
+    return {"id": device.id, "user_id": device.user_id, "hostname": device.hostname, "ip_address": device.ip_address,
             "device_type": device.device_type, "operating_system": device.operating_system,
             "status": device.status, "last_seen": device.last_seen.isoformat() if device.last_seen else None,
             "created_at": device.created_at.isoformat(), "updated_at": device.updated_at.isoformat()}

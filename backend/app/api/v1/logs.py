@@ -9,7 +9,7 @@ router = APIRouter(prefix="/logs", tags=["logs"])
 
 
 def serialize(log):
-    return {"id": log.id, "level": log.level, "source": log.source, "message": log.message,
+    return {"id": log.id, "device_id": log.device_id, "level": log.level, "source": log.source, "message": log.message,
             "event_time": log.event_time.isoformat() if log.event_time else None,
             "created_at": log.created_at.isoformat()}
 

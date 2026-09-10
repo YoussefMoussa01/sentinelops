@@ -5,5 +5,6 @@ from app.models.investigation import Investigation
 from app.models.device import Device
 from app.models.log_event import LogEvent
 from app.models.investigation_resources import Evidence, InvestigationNote
+from app.models.ip_address import IPAddress, Location
 
-__all__ = ["User", "Role", "Permission", "Alert", "Investigation", "Device", "LogEvent", "Evidence", "InvestigationNote"]
+__all__ = ["User", "Role", "Permission", "Alert", "Investigation", "Device", "LogEvent", "Evidence", "InvestigationNote", "IPAddress", "Location"]

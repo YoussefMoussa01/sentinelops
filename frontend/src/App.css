@@ -169,6 +169,32 @@ textarea {
 
 .btn-danger:hover { background: #e05d44; color: white; }
 
+.assistant-markdown {
+  overflow-wrap: anywhere;
+}
+
+.assistant-markdown p + p { margin-top: 0.7rem; }
+.assistant-markdown ul + p,
+.assistant-markdown ol + p,
+.assistant-markdown pre + p { margin-top: 0.8rem; }
+.assistant-markdown li::marker { color: var(--cyan); }
+
+.chat-messages { overscroll-behavior: contain; scrollbar-width: thin; }
+.chat-message { animation: chat-message-in 180ms ease-out both; }
+.typing-dot { width: 0.3rem; height: 0.3rem; border-radius: 999px; background: var(--cyan); animation: typing-pulse 900ms ease-in-out infinite; }
+.typing-dot:nth-child(2) { animation-delay: 120ms; }
+.typing-dot:nth-child(3) { animation-delay: 240ms; }
+
+@keyframes chat-message-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes typing-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
 .eyebrow {
   color: var(--cyan);
   font-family: 'IBM Plex Mono', 'Cascadia Code', monospace;

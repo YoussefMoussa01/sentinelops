@@ -19,7 +19,11 @@ from app.schemas.security import (
     InvestigationUpdate,
     DeviceCreate,
     DeviceUpdate,
+    IPAddressCreate,
+    IPAddressUpdate,
+    LocationCreate,
 )
+from app.schemas.investigation_resources import EvidenceCreate, NoteCreate
 
 __all__ = [
     "UserBase",
@@ -42,4 +46,9 @@ __all__ = [
     "InvestigationUpdate",
     "DeviceCreate",
     "DeviceUpdate",
+    "IPAddressCreate",
+    "IPAddressUpdate",
+    "LocationCreate",
+    "EvidenceCreate",
+    "NoteCreate",
 ]

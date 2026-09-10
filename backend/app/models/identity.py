@@ -16,9 +16,13 @@ class User(Base, TimestampMixin):
     is_active = Column(Boolean, default=True, nullable=False)
     role = Column(String(50), default="VIEWER", nullable=False)
 
-    # Relationships (will be added in later phases)
-    # devices = relationship("Device", back_populates="user")
-    # alerts = relationship("Alert", back_populates="user")
+    devices = relationship("Device", back_populates="user")
+    alerts = relationship("Alert", back_populates="user", foreign_keys="Alert.user_id")
+    created_investigations = relationship(
+        "Investigation",
+        back_populates="creator",
+        foreign_keys="Investigation.created_by",
+    )
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username={self.username})>"

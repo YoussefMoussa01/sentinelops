@@ -65,6 +65,7 @@ class InvestigationUpdate(BaseModel):
 
 
 class DeviceCreate(BaseModel):
+    user_id: str | None = None
     hostname: str = Field(default="New device", min_length=1, max_length=150)
     ip_address: str | None = Field(default=None, max_length=45)
     device_type: str = Field(default="WORKSTATION", min_length=1, max_length=50)
@@ -80,6 +81,7 @@ class DeviceCreate(BaseModel):
 
 
 class DeviceUpdate(BaseModel):
+    user_id: str | None = None
     hostname: str | None = Field(default=None, min_length=1, max_length=150)
     ip_address: str | None = Field(default=None, max_length=45)
     device_type: str | None = Field(default=None, min_length=1, max_length=50)
@@ -92,3 +94,36 @@ class DeviceUpdate(BaseModel):
         if value is not None:
             ip_address(value)
         return value
+
+
+class IPAddressCreate(BaseModel):
+    address: str = Field(min_length=1, max_length=45)
+    is_private: bool = False
+    country: str | None = Field(default=None, max_length=100)
+    city: str | None = Field(default=None, max_length=100)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    reputation_score: float = Field(default=50.0, ge=0, le=100)
+
+    @field_validator("address")
+    @classmethod
+    def validate_address(cls, value: str) -> str:
+        ip_address(value)
+        return value
+
+
+class IPAddressUpdate(BaseModel):
+    is_private: bool | None = None
+    country: str | None = Field(default=None, max_length=100)
+    city: str | None = Field(default=None, max_length=100)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    reputation_score: float | None = Field(default=None, ge=0, le=100)
+
+
+class LocationCreate(BaseModel):
+    country: str | None = Field(default=None, max_length=100)
+    city: str | None = Field(default=None, max_length=100)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    timezone: str | None = Field(default=None, max_length=100)

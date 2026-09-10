@@ -5,6 +5,7 @@ from enum import Enum
 class UserRole(str, Enum):
     """User roles."""
 
+    SUPER_ADMIN = "SUPER_ADMIN"
     SOC_ADMIN = "SOC_ADMIN"
     SECURITY_ANALYST = "SECURITY_ANALYST"
     INVESTIGATOR = "INVESTIGATOR"

@@ -7,10 +7,10 @@ from app.models.device import Device
 
 class DeviceRepository:
     @staticmethod
-    def create(db: Session, *, hostname: str, ip_address: str | None,
+    def create(db: Session, *, user_id: str | None, hostname: str, ip_address: str | None,
                device_type: str, operating_system: str | None,
                status: str, last_seen=None) -> Device:
-        device = Device(hostname=hostname, ip_address=ip_address,
+        device = Device(user_id=user_id, hostname=hostname, ip_address=ip_address,
                         device_type=device_type, operating_system=operating_system,
                         status=status, last_seen=last_seen)
         db.add(device)

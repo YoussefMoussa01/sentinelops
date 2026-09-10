@@ -8,6 +8,8 @@ from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.devices import router as devices_router
 from app.api.v1.logs import router as logs_router
 from app.api.v1.ai import router as ai_router
+from app.api.v1.investigation_resources import router as investigation_resources_router
+from app.api.v1.ip_addresses import router as ip_addresses_router
 
 router = APIRouter()
 
@@ -20,6 +22,8 @@ router.include_router(dashboard_router)
 router.include_router(devices_router)
 router.include_router(logs_router)
 router.include_router(ai_router)
+router.include_router(investigation_resources_router)
+router.include_router(ip_addresses_router)
 
 
 @router.get("/health")

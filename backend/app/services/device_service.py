@@ -1,5 +1,6 @@
 """Device service."""
 from sqlalchemy.orm import Session
+from app.core.exceptions import NotFoundError
 from app.models.device import Device
 from app.repositories.device_repository import DeviceRepository
 
@@ -11,7 +12,10 @@ class DeviceService:
 
     @staticmethod
     def get_device(db: Session, device_id: str) -> Device:
-        return DeviceRepository.get_by_id(db, device_id)
+        device = DeviceRepository.get_by_id(db, device_id)
+        if not device:
+            raise NotFoundError("Device")
+        return device
 
     @staticmethod
     def list_devices(db: Session, skip: int = 0, limit: int = 100) -> list[Device]:

@@ -11,6 +11,7 @@ import { UserDetailPage } from '@/pages/UserDetailPage'
 import { DevicesPage } from '@/pages/DevicesPage'
 import { DeviceDetailPage } from '@/pages/DeviceDetailPage'
 import { LogsPage } from '@/pages/LogsPage'
+import { IPAddressesPage } from '@/pages/IPAddressesPage'
 import { AiPage } from '@/pages/AiPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { ProtectedRoute, Layout } from '@/components'
@@ -108,6 +109,14 @@ export const Router = () => (
         element={
           <Layout>
             <ProtectedRoute element={<LogsPage />} requiredPermission="view_logs" />
+          </Layout>
+        }
+      />
+      <Route
+        path="/ip-addresses"
+        element={
+          <Layout>
+            <ProtectedRoute element={<IPAddressesPage />} requiredPermission="view_ip_addresses" />
           </Layout>
         }
       />

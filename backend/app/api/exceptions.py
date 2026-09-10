@@ -3,8 +3,21 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from app.core.exceptions import AppException
 from app.core.logging import get_logger
+from app.core.config import get_settings
 
 logger = get_logger("api")
+
+
+def cors_headers(request: Request) -> dict[str, str]:
+    """Keep CORS headers on application-level error responses."""
+    origin = request.headers.get("origin")
+    if origin and origin in get_settings().cors_origins_list:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Vary": "Origin",
+        }
+    return {}
 
 
 def add_exception_handlers(app: FastAPI):
@@ -27,6 +40,7 @@ def add_exception_handlers(app: FastAPI):
                     __import__("datetime").timezone.utc
                 ).isoformat()},
             },
+            headers=cors_headers(request),
         )
 
     @app.exception_handler(Exception)
@@ -46,4 +60,5 @@ def add_exception_handlers(app: FastAPI):
                     __import__("datetime").timezone.utc
                 ).isoformat()},
             },
+            headers=cors_headers(request),
         )

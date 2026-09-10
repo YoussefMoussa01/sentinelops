@@ -1,12 +1,18 @@
 """Main FastAPI application."""
 from fastapi import FastAPI, Response
+from sqlalchemy.exc import SQLAlchemyError
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.api.v1 import router as v1_router
 from app.api.exceptions import add_exception_handlers
+from app.database.session import SessionLocal
+from app.models import User
+from app.core.security import hash_password
+from app.core.logging import get_logger
 
 settings = get_settings()
+logger = get_logger("bootstrap")
 
 # Setup logging
 setup_logging()
@@ -26,6 +32,46 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def bootstrap_super_admin() -> None:
+    """Create the configured first super-admin without overwriting passwords."""
+    if not all((settings.SUPER_ADMIN_USERNAME, settings.SUPER_ADMIN_EMAIL, settings.SUPER_ADMIN_PASSWORD)):
+        return
+    if len(settings.SUPER_ADMIN_PASSWORD) < 12:
+        raise RuntimeError("SUPER_ADMIN_PASSWORD must contain at least 12 characters")
+
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(
+            (User.username == settings.SUPER_ADMIN_USERNAME)
+            | (User.email == settings.SUPER_ADMIN_EMAIL)
+        ).first()
+        if existing:
+            if existing.username != settings.SUPER_ADMIN_USERNAME or existing.email != settings.SUPER_ADMIN_EMAIL:
+                raise RuntimeError("Super-admin bootstrap username/email conflicts with an existing user")
+            if existing.role != "SUPER_ADMIN" or not existing.is_active:
+                existing.role = "SUPER_ADMIN"
+                existing.is_active = True
+                db.commit()
+                logger.info("Existing bootstrap account promoted to SUPER_ADMIN: %s", existing.username)
+            return
+
+        db.add(User(
+            username=settings.SUPER_ADMIN_USERNAME,
+            email=settings.SUPER_ADMIN_EMAIL,
+            password_hash=hash_password(settings.SUPER_ADMIN_PASSWORD),
+            role="SUPER_ADMIN",
+            is_active=True,
+        ))
+        db.commit()
+        logger.info("Created configured SUPER_ADMIN account: %s", settings.SUPER_ADMIN_USERNAME)
+    except SQLAlchemyError:
+        db.rollback()
+        logger.exception("Super-admin bootstrap failed; verify migrations are applied")
+    finally:
+        db.close()
 
 
 # Add middleware to include timestamp in response

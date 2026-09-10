@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import uuid
-from sqlalchemy import Column, Float, String, Text, Enum as SAEnum
+from sqlalchemy import Column, Float, ForeignKey, String, Text, Enum as SAEnum
+from sqlalchemy.orm import relationship
 from app.core.constants import InvestigationStatus
 from app.database.session import Base
 from app.models.base import TimestampMixin
@@ -23,7 +24,10 @@ class Investigation(Base, TimestampMixin):
         default=InvestigationStatus.OPEN,
         nullable=False,
     )
-    created_by = Column(String(36), nullable=True)
+    created_by = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    creator = relationship("User", back_populates="created_investigations", foreign_keys=[created_by])
+    alerts = relationship("Alert", back_populates="investigation")
 
     def __repr__(self) -> str:
         return f"<Investigation(id={self.id}, title={self.title})>"

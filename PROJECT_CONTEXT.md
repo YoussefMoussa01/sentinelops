@@ -89,14 +89,15 @@ The repository has already progressed beyond the original Phase 0 starting point
 - The frontend foundation and backend foundation are present.
 - JWT authentication, protected routes and initial permission handling are implemented.
 - `backend/app/api/dependencies.py` contains the current JWT user dependency and role-permission checks.
+- `SUPER_ADMIN_USERNAME`, `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` optionally bootstrap one idempotent `SUPER_ADMIN` account at backend startup; the password is never stored in source code.
 - The frontend store and root saga are prepared for additional feature slices and sagas.
 - `PHASE_3_CHECKLIST.md` records Phase 3 as verified.
 
-The repository is currently in Phase 4 implementation. Alerts, investigations, devices and logs have initial CRUD/API coverage. The latest Phase 4 work also separates read permissions from management permissions: viewers can read the permitted resources but cannot mutate them, and device access uses dedicated device permissions. Alert, investigation and device request payloads now use dedicated Pydantic schemas with validation.
+The repository is currently in Phase 4 implementation. Alerts, investigations, devices and logs have initial CRUD/API coverage. The latest Phase 4 work also separates read permissions from management permissions: viewers can read the permitted resources but cannot mutate them, and device access uses dedicated device permissions. Alert, investigation and device request payloads now use dedicated Pydantic schemas with validation. User, device, alert, investigation and log entities now expose ORM relationships with migration `008_link_security_entities`.
 
-The remaining Phase 4 work includes stronger request schemas and validation, complete user/device/activity relationships, evidence and investigation notes, and more consistent service-level error handling.
+Evidence and investigation notes are now implemented as investigation-scoped resources with migration, validation, protected endpoints and frontend forms. The chatbot and AI Agent now share a backend AI service with an OpenRouter provider adapter; the API key remains server-side, Docker loads it from `backend/.env`, and OpenRouter retries/fallbacks are configurable. The AI service also uses a compact pre-prompt and input/output limits to reduce token usage, while the chat preserves recent messages. User/device/activity relationships and structured not-found service errors are now covered by migration `008_link_security_entities` and integration tests. IP intelligence is now covered by migration `009_add_ip_intelligence`, protected `/ip-addresses` endpoints, reputation validation and nested locations. Remaining Phase 4 work includes broader activity ingestion and frontend IP intelligence views.
 
-The frontend now has a consistent visual layer for the Phase 4 screens: shared page framing, responsive navigation, status chips, field controls, interactive data rows and improved alert, investigation, device and log views.
+The frontend now has a consistent visual layer for the Phase 4 screens: shared page framing, responsive navigation, status chips, field controls, interactive data rows and improved alert, investigation, device, log, IP intelligence and user role-management views. RBAC now includes a protected `SUPER_ADMIN` role: only super-admins can assign, modify or delete super-admin accounts.
 
 ## Reference Files
 
