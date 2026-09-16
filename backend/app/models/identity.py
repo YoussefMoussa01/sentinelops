@@ -23,6 +23,9 @@ class User(Base, TimestampMixin):
         back_populates="creator",
         foreign_keys="Investigation.created_by",
     )
+    collected_evidence = relationship("Evidence", back_populates="collector", foreign_keys="Evidence.collected_by")
+    investigation_notes = relationship("InvestigationNote", back_populates="author", foreign_keys="InvestigationNote.author_id")
+    ai_conversations = relationship("AIConversation", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username={self.username})>"

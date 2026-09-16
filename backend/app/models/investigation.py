@@ -28,6 +28,8 @@ class Investigation(Base, TimestampMixin):
 
     creator = relationship("User", back_populates="created_investigations", foreign_keys=[created_by])
     alerts = relationship("Alert", back_populates="investigation")
+    evidence = relationship("Evidence", back_populates="investigation", cascade="all, delete-orphan")
+    notes = relationship("InvestigationNote", back_populates="investigation", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Investigation(id={self.id}, title={self.title})>"

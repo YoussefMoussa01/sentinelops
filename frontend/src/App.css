@@ -42,6 +42,72 @@ textarea {
   background: radial-gradient(circle at 95% 0%, rgba(13, 148, 136, 0.11), transparent 25rem), var(--canvas);
 }
 
+.sidebar-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 50;
+  transform: translate3d(-105%, 0, 0) !important;
+  transition: transform 200ms ease;
+}
+
+.sidebar-drawer--open {
+  transform: translate3d(0, 0, 0) !important;
+}
+
+.mobile-menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  color: var(--muted);
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.mobile-menu-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+}
+
+.mobile-menu-button:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  border: 0;
+  background: rgba(16, 24, 39, 0.55);
+  backdrop-filter: blur(1px);
+}
+
+.sidebar-is-open {
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .sidebar-drawer,
+  .sidebar-drawer--open {
+    position: static;
+    z-index: auto;
+    width: 16rem;
+    transform: none !important;
+    box-shadow: none;
+  }
+
+  .mobile-menu-button,
+  .sidebar-overlay {
+    display: none;
+  }
+
+  .sidebar-is-open {
+    overflow: auto;
+  }
+}
+
 .surface {
   border: 1px solid var(--line);
   background: var(--paper);
@@ -233,7 +299,5 @@ textarea {
 }
 
 @media (max-width: 640px) {
-  .app-shell > aside { display: none; }
-
   .app-shell main { padding: 1rem; }
 }

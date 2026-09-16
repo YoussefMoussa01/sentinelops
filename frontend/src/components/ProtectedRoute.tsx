@@ -13,7 +13,11 @@ export const ProtectedRoute = ({
   requiredRole,
   requiredPermission,
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
+
+  if (isLoading) {
+    return <div className="flex min-h-[12rem] items-center justify-center text-sm text-[var(--muted)]">Restoring session...</div>
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />

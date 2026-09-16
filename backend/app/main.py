@@ -1,5 +1,7 @@
 """Main FastAPI application."""
-from fastapi import FastAPI, Response
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
@@ -17,24 +19,6 @@ logger = get_logger("bootstrap")
 # Setup logging
 setup_logging()
 
-# Create FastAPI app
-app = FastAPI(
-    title=settings.API_TITLE,
-    version=settings.API_VERSION,
-    description="AI-powered cybersecurity investigation platform",
-)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-@app.on_event("startup")
 def bootstrap_super_admin() -> None:
     """Create the configured first super-admin without overwriting passwords."""
     if not all((settings.SUPER_ADMIN_USERNAME, settings.SUPER_ADMIN_EMAIL, settings.SUPER_ADMIN_PASSWORD)):
@@ -72,6 +56,31 @@ def bootstrap_super_admin() -> None:
         logger.exception("Super-admin bootstrap failed; verify migrations are applied")
     finally:
         db.close()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Run idempotent bootstrap work during application startup."""
+    bootstrap_super_admin()
+    yield
+
+
+# Create FastAPI app
+app = FastAPI(
+    title=settings.API_TITLE,
+    version=settings.API_VERSION,
+    description="AI-powered cybersecurity investigation platform",
+    lifespan=lifespan,
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Add middleware to include timestamp in response

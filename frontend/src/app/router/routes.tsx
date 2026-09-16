@@ -92,7 +92,7 @@ export const Router = () => (
         path="/devices"
         element={
           <Layout>
-            <ProtectedRoute element={<DevicesPage />} requiredPermission="view_users" />
+            <ProtectedRoute element={<DevicesPage />} requiredPermission="view_devices" />
           </Layout>
         }
       />
@@ -100,7 +100,7 @@ export const Router = () => (
         path="/devices/:deviceId"
         element={
           <Layout>
-            <ProtectedRoute element={<DeviceDetailPage />} requiredPermission="view_users" />
+            <ProtectedRoute element={<DeviceDetailPage />} requiredPermission="view_devices" />
           </Layout>
         }
       />

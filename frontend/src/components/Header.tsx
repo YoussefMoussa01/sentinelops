@@ -1,9 +1,14 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, LogOut, Search } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Menu, Search } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 
-export const Header = () => {
+interface HeaderProps {
+  onMenuOpen?: () => void
+  menuOpen?: boolean
+}
+
+export const Header = ({ onMenuOpen, menuOpen = false }: HeaderProps) => {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -14,7 +19,10 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-white/85 text-[var(--ink)] backdrop-blur">
       <div className="flex min-h-[4.75rem] items-center justify-between gap-4 px-4 md:px-7">
-        <div className="min-w-0"><p className="eyebrow">Security operations center</p><p className="mt-1 truncate text-sm font-semibold capitalize">{pageName}</p></div>
+        <div className="flex min-w-0 items-center gap-3">
+          <button aria-label="Open navigation" aria-expanded={menuOpen} onClick={onMenuOpen} className="mobile-menu-button"><Menu size={18} /></button>
+          <div className="min-w-0"><p className="eyebrow">Security operations center</p><p className="mt-1 truncate text-sm font-semibold capitalize">{pageName}</p></div>
+        </div>
 
         <div className="flex items-center gap-4">
           <button aria-label="Search workspace" className="hidden h-9 w-9 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--muted)] transition hover:border-[var(--cyan)] hover:text-[var(--cyan)] sm:flex"><Search size={16} /></button>

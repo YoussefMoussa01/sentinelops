@@ -13,6 +13,12 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/features/auth'
+import { BrandLogo } from './BrandLogo'
+
+interface SidebarProps {
+  open?: boolean
+  onClose?: () => void
+}
 
 interface NavItem {
   label: string
@@ -22,7 +28,7 @@ interface NavItem {
   subItems?: NavItem[]
 }
 
-export const Sidebar = () => {
+export const Sidebar = ({ open = false, onClose }: SidebarProps) => {
   const location = useLocation()
   const { user } = useAuth()
   const [expandedItems, setExpandedItems] = useState<string[]>(['Security Data'])
@@ -85,13 +91,16 @@ export const Sidebar = () => {
     return user?.permissions?.includes(item.requiredPermission)
   })
 
+  const closeAfterNavigation = () => onClose?.()
+
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-[#243247] bg-[var(--ink)] text-white">
+    <aside data-open={open} className={`sidebar-drawer ${open ? 'sidebar-drawer--open' : ''} flex h-screen w-[min(19rem,88vw)] flex-col border-r border-[#243247] bg-[var(--ink)] text-white shadow-2xl`}>
       <div className="border-b border-white/10 px-5 py-6">
-        <Link to="/dashboard" className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--cyan)] font-bold text-[var(--ink)]">S</span>
-          <span className="brand-copy"><span className="block text-lg font-bold tracking-tight">SentinelOps</span><span className="block text-[10px] uppercase tracking-[0.16em] text-white/45">Threat response</span></span>
+        <div className="flex items-center justify-between gap-3">
+        <Link to="/dashboard" onClick={closeAfterNavigation} className="flex min-w-0 w-full items-center gap-3 md:justify-center">
+          <BrandLogo responsive />
         </Link>
+        </div>
       </div>
       <nav className="flex-1 space-y-2 overflow-y-auto px-3 py-6">
         {visibleItems.map((item) => {
@@ -122,6 +131,7 @@ export const Sidebar = () => {
               ) : (
                 <Link
                   to={item.to}
+                  onClick={closeAfterNavigation}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
                     isActive
                     ? 'bg-[var(--cyan)] text-[var(--ink)] shadow-lg shadow-teal-950/20'
@@ -139,6 +149,7 @@ export const Sidebar = () => {
                     <Link
                       key={subItem.to}
                       to={subItem.to}
+                      onClick={closeAfterNavigation}
                       className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition ${
                         location.pathname === subItem.to
                           ? 'bg-white/10 text-white'

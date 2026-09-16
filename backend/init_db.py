@@ -3,8 +3,9 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database import engine
-from app.models import Base
+from app.database import Base, engine
+# Import models so SQLAlchemy registers every table before create_all.
+from app import models  # noqa: F401
 
 def init_db():
     """Initialize database and create all tables."""

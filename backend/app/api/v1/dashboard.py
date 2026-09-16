@@ -4,11 +4,12 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Alert, Investigation, User, Device
+from app.api.dependencies import check_permission
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
-@router.get("/stats", response_model=dict)
+@router.get("/stats", response_model=dict, dependencies=[Depends(check_permission("view_alerts"))])
 async def dashboard_stats(db: Session = Depends(get_db)):
     """Return live counts and the most recent domain records."""
     active_alerts = db.query(Alert).filter(Alert.status.notin_(["RESOLVED", "FALSE_POSITIVE"])).count()

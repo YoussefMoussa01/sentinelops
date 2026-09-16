@@ -1,8 +1,8 @@
-import axios, { AxiosInstance, AxiosError } from 'axios'
-import { ApiResponse } from '@/types/api.types'
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
 
 class ApiClient {
   private client: AxiosInstance
+  private refreshPromise: Promise<string> | null = null
 
   constructor() {
     this.client = axios.create({
@@ -23,18 +23,39 @@ class ApiClient {
       return config
     })
 
-    // Handle 401 responses
+    // Refresh an expired access token once before ending the session.
     this.client.interceptors.response.use(
       (response) => response,
-      (error: AxiosError) => {
+      async (error: AxiosError) => {
+        const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined
+        const isRefreshRequest = originalRequest?.url?.includes('/auth/refresh')
+        const tokenKey = import.meta.env.VITE_TOKEN_STORAGE_KEY || 'sentinelops_token'
+        const refreshToken = localStorage.getItem('sentinelops_refresh_token')
+
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isRefreshRequest && refreshToken) {
+          originalRequest._retry = true
+          try {
+            this.refreshPromise ??= this.client
+              .post<{ access_token: string; refresh_token?: string }>('/auth/refresh', { refresh_token: refreshToken })
+              .then(({ data }) => {
+                localStorage.setItem(tokenKey, data.access_token)
+                if (data.refresh_token) localStorage.setItem('sentinelops_refresh_token', data.refresh_token)
+                return data.access_token
+              })
+              .finally(() => { this.refreshPromise = null })
+
+            const accessToken = await this.refreshPromise
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`
+            return this.client.request(originalRequest)
+          } catch {
+            // Fall through to the normal session cleanup below.
+          }
+        }
+
         if (error.response?.status === 401) {
-          // Clear tokens on unauthorized
-          localStorage.removeItem(
-            import.meta.env.VITE_TOKEN_STORAGE_KEY || 'sentinelops_token'
-          )
+          localStorage.removeItem(tokenKey)
           localStorage.removeItem('sentinelops_refresh_token')
-          // Redirect to login
-          window.location.href = '/login'
+          if (window.location.pathname !== '/login') window.location.href = '/login'
         }
         return Promise.reject(error)
       }
@@ -79,7 +100,9 @@ class ApiClient {
 
   private handleError(error: unknown) {
     if (axios.isAxiosError(error)) {
-      const message = error.response?.data?.error?.message || 
+      const responseData = error.response?.data as { detail?: string | { message?: string }; error?: { message?: string } } | undefined
+      const message = (typeof responseData?.detail === 'string' ? responseData.detail : responseData?.detail?.message) ||
+                      responseData?.error?.message ||
                       error.response?.statusText || 
                       error.message ||
                       'API error'

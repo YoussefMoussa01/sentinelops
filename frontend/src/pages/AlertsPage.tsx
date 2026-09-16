@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Search, ShieldAlert } from 'lucide-react'
-import { alertsAPI } from '@/services/api'
+import { alertsAPI, devicesAPI } from '@/services/api'
 
 interface AlertItem {
   id: string
@@ -11,6 +11,15 @@ interface AlertItem {
   status: string
   source?: string
   detection_time?: string
+  device_id?: string
+  device?: { hostname: string; ip_address?: string; status: string }
+}
+
+interface DeviceOption {
+  id: string
+  hostname: string
+  ip_address?: string
+  status: string
 }
 
 export const AlertsPage = () => {
@@ -23,6 +32,8 @@ export const AlertsPage = () => {
   const [severity, setSeverity] = useState('MEDIUM')
   const [source, setSource] = useState('')
   const [saving, setSaving] = useState(false)
+  const [devices, setDevices] = useState<DeviceOption[]>([])
+  const [deviceId, setDeviceId] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [severityFilter, setSeverityFilter] = useState('ALL')
@@ -31,6 +42,9 @@ export const AlertsPage = () => {
 
   useEffect(() => {
     loadAlerts()
+    devicesAPI.getDevices().then((response) => {
+      if (Array.isArray(response)) setDevices(response as DeviceOption[])
+    }).catch(() => setDevices([]))
   }, [page])
 
   const loadAlerts = () => {
@@ -53,10 +67,11 @@ export const AlertsPage = () => {
     setSaving(true)
     setError('')
     try {
-      await alertsAPI.createAlert({ title, description, severity, source })
+      await alertsAPI.createAlert({ title, description, severity, source, device_id: deviceId || null })
       setTitle('')
       setDescription('')
       setSource('')
+      setDeviceId('')
       setShowForm(false)
       loadAlerts()
     } catch (requestError) {
@@ -104,6 +119,13 @@ export const AlertsPage = () => {
               </select>
               <p className="mt-1 text-xs text-gray-500">The system or tool that detected this alert.</p>
             </div>
+            <div>
+              <select value={deviceId} onChange={(event) => setDeviceId(event.target.value)} className="field-control">
+                <option value="">No device linked</option>
+                {devices.map((device) => <option key={device.id} value={device.id}>{device.hostname} · {device.ip_address || 'No IP'} · {device.status}</option>)}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">Link the alert to a monitored device. Its IP stays managed on the device.</p>
+            </div>
           </div>
           <button disabled={saving} type="submit" className="btn-primary disabled:opacity-50">
             {saving ? 'Creating...' : 'Create alert'}
@@ -130,7 +152,7 @@ export const AlertsPage = () => {
                     <span className={`status-chip status-chip--${alert.severity.toLowerCase()}`}>{alert.severity}</span>
                   </div>
                   <p className="mt-1 text-sm text-gray-600">{alert.description || 'No description'}</p>
-                  <p className="mt-2 text-xs text-gray-500">{alert.status} {alert.source ? `· ${alert.source}` : ''}</p>
+                  <p className="mt-2 text-xs text-gray-500">{alert.status} {alert.source ? `· ${alert.source}` : ''} {alert.device ? `· ${alert.device.hostname} · ${alert.device.ip_address || 'No IP'}` : ''}</p>
                 </Link>
               ))}
             </div>

@@ -1,5 +1,8 @@
 """Authentication API endpoints."""
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from collections import defaultdict
+from time import monotonic
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Header
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.core import (
@@ -25,6 +28,34 @@ import logging
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
+
+# Process-local guard for development and single-instance deployments. A shared
+# store (Redis/API gateway) should replace this when running multiple workers.
+_auth_failures: dict[tuple[str, str], list[float]] = defaultdict(list)
+
+
+def _check_auth_rate_limit(request: Request, action: str) -> tuple[str, str]:
+    key = (request.client.host if request.client else "unknown", action)
+    now = monotonic()
+    window = settings.AUTH_RATE_LIMIT_WINDOW_SECONDS
+    recent = [timestamp for timestamp in _auth_failures[key] if now - timestamp < window]
+    _auth_failures[key] = recent
+    if len(recent) >= settings.AUTH_RATE_LIMIT_ATTEMPTS:
+        retry_after = max(1, int(window - (now - recent[0])))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many authentication attempts. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+    return key
+
+
+def _record_auth_failure(key: tuple[str, str]) -> None:
+    _auth_failures[key].append(monotonic())
+
+
+def _clear_auth_failures(key: tuple[str, str]) -> None:
+    _auth_failures.pop(key, None)
 
 def user_access(user):
     return {
@@ -64,11 +95,13 @@ def create_tokens(user_id: str) -> dict:
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(login_req: LoginRequest, db: Session = Depends(get_db)):
+async def login(request: Request, login_req: LoginRequest, db: Session = Depends(get_db)):
     """Login endpoint - authenticate with username and password."""
+    rate_key = _check_auth_rate_limit(request, "login")
     try:
         # Authenticate user
         user = UserService.authenticate_user(db, login_req.username, login_req.password)
+        _clear_auth_failures(rate_key)
 
         # Create tokens
         tokens = create_tokens(user.id)
@@ -89,6 +122,7 @@ async def login(login_req: LoginRequest, db: Session = Depends(get_db)):
             token_type="bearer",
         )
     except UnauthorizedError as e:
+        _record_auth_failure(rate_key)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=e.message,
@@ -102,8 +136,9 @@ async def login(login_req: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/register", response_model=LoginResponse, status_code=status.HTTP_201_CREATED)
-async def register(register_req: RegisterRequest, db: Session = Depends(get_db)):
+async def register(request: Request, register_req: RegisterRequest, db: Session = Depends(get_db)):
     """Create a viewer account and sign the user in."""
+    rate_key = _check_auth_rate_limit(request, "register")
     try:
         user = UserService.create_user(
             db,
@@ -115,6 +150,7 @@ async def register(register_req: RegisterRequest, db: Session = Depends(get_db))
             ),
         )
         tokens = create_tokens(user.id)
+        _clear_auth_failures(rate_key)
         return LoginResponse(
             access_token=tokens["access_token"],
             refresh_token=tokens["refresh_token"],
@@ -130,6 +166,7 @@ async def register(register_req: RegisterRequest, db: Session = Depends(get_db))
             token_type="bearer",
         )
     except ConflictError as exc:
+        _record_auth_failure(rate_key)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=exc.message) from exc
 
 

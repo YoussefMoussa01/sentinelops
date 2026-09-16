@@ -60,8 +60,10 @@ export const investigationsAPI = {
   },
   getEvidence: async (id: string) => apiClient.get(`/investigations/${id}/evidence`),
   createEvidence: async (id: string, data: unknown) => apiClient.post(`/investigations/${id}/evidence`, data),
+  deleteEvidence: async (investigationId: string, evidenceId: string) => apiClient.delete(`/investigations/${investigationId}/evidence/${evidenceId}`),
   getNotes: async (id: string) => apiClient.get(`/investigations/${id}/notes`),
   createNote: async (id: string, data: unknown) => apiClient.post(`/investigations/${id}/notes`, data),
+  deleteNote: async (investigationId: string, noteId: string) => apiClient.delete(`/investigations/${investigationId}/notes/${noteId}`),
 }
 
 // Dashboard API
@@ -92,9 +94,10 @@ export const usersAPI = {
 
 // Devices API
 export const devicesAPI = {
-  getDevices: async () => {
-    return apiClient.get('/devices')
+  getDevices: async (skip = 0, limit = 100) => {
+    return apiClient.get('/devices', { skip, limit })
   },
+  getAssignees: async () => apiClient.get('/devices/assignees'),
   getDevice: async (id: string) => {
     return apiClient.get(`/devices/${id}`)
   },
@@ -121,8 +124,8 @@ export const logsAPI = {
 
 // AI API
 export const aiAPI = {
-  getConversations: async () => {
-    return apiClient.get('/ai/conversations')
+  getConversations: async (includeArchived = false, search = '') => {
+    return apiClient.get('/ai/conversations', { include_archived: includeArchived, search: search || undefined })
   },
   getConversation: async (id: string) => {
     return apiClient.get(`/ai/conversations/${id}`)
@@ -130,11 +133,16 @@ export const aiAPI = {
   createConversation: async (data: unknown) => {
     return apiClient.post('/ai/conversations', data)
   },
+  updateConversation: async (id: string, data: { is_archived: boolean }) => apiClient.patch(`/ai/conversations/${id}`, data),
+  deleteConversation: async (id: string) => apiClient.delete(`/ai/conversations/${id}`),
   sendMessage: async (conversationId: string, message: string) => {
     return apiClient.post(`/ai/conversations/${conversationId}/messages`, { message })
   },
   queryAssistant: async (message: string, context?: string, history?: unknown[]) => {
     return apiClient.post('/ai/query', { message, context, history })
+  },
+  executeTool: async (name: string, arguments_: Record<string, unknown> = {}) => {
+    return apiClient.post('/ai/tools/execute', { name, arguments: arguments_ })
   },
 }
 

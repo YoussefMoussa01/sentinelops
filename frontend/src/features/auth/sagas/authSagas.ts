@@ -66,6 +66,15 @@ function* logoutSaga(): Generator<any, void, any> {
 
 function* restoreSessionSaga(): Generator<any, void, any> {
   try {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+
+    // Renew first so a page refresh never starts with an expired access token.
+    if (refreshToken) {
+      const refreshed = yield call(() => apiClient.post('/auth/refresh', { refresh_token: refreshToken }))
+      localStorage.setItem(TOKEN_KEY, refreshed.access_token)
+      if (refreshed.refresh_token) localStorage.setItem(REFRESH_TOKEN_KEY, refreshed.refresh_token)
+    }
+
     const token = localStorage.getItem(TOKEN_KEY)
     if (!token) {
       yield put(restoreSessionFailure())
@@ -80,7 +89,7 @@ function* restoreSessionSaga(): Generator<any, void, any> {
     yield put(
       restoreSessionSuccess({
         user: response,
-        token: token,
+        token: localStorage.getItem(TOKEN_KEY) || token,
       })
     )
   } catch (error) {

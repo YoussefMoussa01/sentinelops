@@ -21,6 +21,8 @@ class IPAddress(Base, TimestampMixin):
     reputation_score = Column(Float, nullable=False, default=50.0)
 
     locations = relationship("Location", back_populates="ip_address", cascade="all, delete-orphan")
+    devices = relationship("Device", back_populates="ip_record")
+    alerts = relationship("Alert", back_populates="ip_record", foreign_keys="Alert.ip_address_id")
 
 
 class Location(Base, TimestampMixin):

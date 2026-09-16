@@ -31,6 +31,7 @@ class Alert(Base, TimestampMixin):
     detection_time = Column(DateTime(timezone=True), nullable=True)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     device_id = Column(String(36), ForeignKey("devices.id", ondelete="SET NULL"), nullable=True)
+    ip_address_id = Column(String(36), ForeignKey("ip_addresses.id", ondelete="SET NULL"), nullable=True, index=True)
     ip_address = Column(String(45), nullable=True)
     investigation_id = Column(
         String(36),
@@ -40,6 +41,7 @@ class Alert(Base, TimestampMixin):
 
     user = relationship("User", back_populates="alerts", foreign_keys=[user_id])
     device = relationship("Device", back_populates="alerts", foreign_keys=[device_id])
+    ip_record = relationship("IPAddress", back_populates="alerts", foreign_keys=[ip_address_id])
     investigation = relationship("Investigation", back_populates="alerts")
 
     def __repr__(self) -> str:

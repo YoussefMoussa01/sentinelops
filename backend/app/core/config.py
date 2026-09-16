@@ -1,3 +1,4 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -13,6 +14,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_SECONDS: int = 3600
     JWT_REFRESH_EXPIRATION_SECONDS: int = 604800
+    AUTH_RATE_LIMIT_ATTEMPTS: int = 5
+    AUTH_RATE_LIMIT_WINDOW_SECONDS: int = 300
 
     # API
     API_V1_PREFIX: str = "/api/v1"
@@ -58,6 +61,20 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+
+    @model_validator(mode="after")
+    def validate_security_settings(self):
+        """Reject development defaults when running in production."""
+        if self.ENVIRONMENT.lower() == "production":
+            if self.DEBUG:
+                raise ValueError("DEBUG must be false in production")
+            if self.JWT_SECRET_KEY == "test-secret-key-change-in-production" or len(self.JWT_SECRET_KEY) < 32:
+                raise ValueError("JWT_SECRET_KEY must be a unique secret of at least 32 characters")
+            if not self.CORS_ORIGINS.strip() or "*" in self.CORS_ORIGINS:
+                raise ValueError("CORS_ORIGINS must explicitly list trusted origins in production")
+            if not self.ALLOWED_HOSTS.strip() or "*" in self.ALLOWED_HOSTS:
+                raise ValueError("ALLOWED_HOSTS must explicitly list trusted hosts in production")
+        return self
 
     @property
     def cors_origins_list(self) -> list[str]:

@@ -13,6 +13,7 @@ export const ChatWidget = () => {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', text: 'I can help with SentinelOps alerts, investigations, devices, logs and security operations.' },
   ])
@@ -25,6 +26,7 @@ export const ChatWidget = () => {
   const resetConversation = () => {
     setMessages([{ role: 'assistant', text: 'I can help with SentinelOps alerts, investigations, devices, logs and security operations.' }])
     setInput('')
+    setConversationId(null)
   }
 
   const sendMessage = async (event: React.FormEvent) => {
@@ -40,9 +42,15 @@ export const ChatWidget = () => {
         content: item.text,
         ...(item.reasoningDetails !== undefined ? { reasoning_details: item.reasoningDetails } : {}),
       }))
-      // The widget is a platform-wide assistant; it must not depend on the active route.
-      const response = await aiAPI.queryAssistant(text, undefined, history) as { answer: string; reasoning_details?: unknown }
-      setMessages((current) => [...current, { role: 'assistant', text: response.answer, reasoningDetails: response.reasoning_details }])
+      // The widget is platform-wide and persists its conversation per user.
+      let activeConversationId = conversationId
+      if (!activeConversationId) {
+        const conversation = await aiAPI.createConversation({ title: 'SentinelOps assistant' }) as { id: string }
+        activeConversationId = conversation.id
+        setConversationId(activeConversationId)
+      }
+      const response = await aiAPI.sendMessage(activeConversationId, text) as { assistant_message: { content: string; reasoning_details?: unknown } }
+      setMessages((current) => [...current, { role: 'assistant', text: response.assistant_message.content, reasoningDetails: response.assistant_message.reasoning_details }])
     } catch (error) {
       setMessages((current) => [...current, { role: 'assistant', text: error instanceof Error ? error.message : 'Assistant unavailable.' }])
     } finally {

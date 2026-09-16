@@ -6,6 +6,7 @@ from app.database import get_db
 from app.schemas import EvidenceCreate, NoteCreate
 from app.services.investigation_service import InvestigationService
 from app.repositories.investigation_resource_repository import InvestigationResourceRepository
+from app.core.exceptions import NotFoundError
 
 router = APIRouter(prefix="/investigations", tags=["investigation-resources"])
 
@@ -31,6 +32,13 @@ async def create_evidence(investigation_id: str, payload: EvidenceCreate, db: Se
     return evidence_response(item)
 
 
+@router.delete("/{investigation_id}/evidence/{evidence_id}", dependencies=[Depends(check_permission("manage_investigations"))])
+async def delete_evidence(investigation_id: str, evidence_id: str, db: Session = Depends(get_db)):
+    InvestigationService.get_investigation(db, investigation_id)
+    InvestigationResourceRepository.delete_evidence(db, evidence_id, investigation_id)
+    return {"status": "success", "message": "Evidence deleted"}
+
+
 @router.get("/{investigation_id}/notes", response_model=list[dict], dependencies=[Depends(check_permission("view_investigations"))])
 async def list_notes(investigation_id: str, db: Session = Depends(get_db)):
     InvestigationService.get_investigation(db, investigation_id)
@@ -42,3 +50,10 @@ async def create_note(investigation_id: str, payload: NoteCreate, db: Session = 
     InvestigationService.get_investigation(db, investigation_id)
     item = InvestigationResourceRepository.create_note(db, investigation_id, content=payload.content, author_id=current_user.id)
     return note_response(item)
+
+
+@router.delete("/{investigation_id}/notes/{note_id}", dependencies=[Depends(check_permission("manage_investigations"))])
+async def delete_note(investigation_id: str, note_id: str, db: Session = Depends(get_db)):
+    InvestigationService.get_investigation(db, investigation_id)
+    InvestigationResourceRepository.delete_note(db, note_id, investigation_id)
+    return {"status": "success", "message": "Note deleted"}

@@ -2,7 +2,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { AuthState, User, LoginRequest } from '../types/auth.types'
 
 const initialState: AuthState = {
-  isLoading: false,
+  // Hold protected routes until App finishes restoring the persisted session.
+  isLoading: true,
   user: null,
   token: null,
   refreshToken: null,

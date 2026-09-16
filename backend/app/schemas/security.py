@@ -16,6 +16,7 @@ class AlertCreate(BaseModel):
     detection_time: datetime | None = None
     user_id: str | None = None
     device_id: str | None = None
+    ip_address_id: str | None = None
     ip_address: str | None = Field(default=None, max_length=45)
     investigation_id: str | None = None
 
@@ -36,6 +37,7 @@ class AlertUpdate(BaseModel):
     detection_time: datetime | None = None
     user_id: str | None = None
     device_id: str | None = None
+    ip_address_id: str | None = None
     ip_address: str | None = Field(default=None, max_length=45)
     investigation_id: str | None = None
 
@@ -66,6 +68,7 @@ class InvestigationUpdate(BaseModel):
 
 class DeviceCreate(BaseModel):
     user_id: str | None = None
+    ip_address_id: str | None = None
     hostname: str = Field(default="New device", min_length=1, max_length=150)
     ip_address: str | None = Field(default=None, max_length=45)
     device_type: str = Field(default="WORKSTATION", min_length=1, max_length=50)
@@ -82,6 +85,7 @@ class DeviceCreate(BaseModel):
 
 class DeviceUpdate(BaseModel):
     user_id: str | None = None
+    ip_address_id: str | None = None
     hostname: str | None = Field(default=None, min_length=1, max_length=150)
     ip_address: str | None = Field(default=None, max_length=45)
     device_type: str | None = Field(default=None, min_length=1, max_length=50)

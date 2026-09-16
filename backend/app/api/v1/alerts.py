@@ -5,6 +5,7 @@ from app.database import get_db
 from app.services.alert_service import AlertService
 from app.api.dependencies import check_permission
 from app.schemas import AlertCreate, AlertUpdate
+from app.models import Device, IPAddress
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
@@ -26,6 +27,11 @@ async def list_alerts(
             "source": alert.source,
             "user_id": alert.user_id,
             "device_id": alert.device_id,
+            "device": {
+                "hostname": alert.device.hostname,
+                "ip_address": alert.device.ip_address,
+                "status": alert.device.status,
+            } if alert.device else None,
             "investigation_id": alert.investigation_id,
             "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
             "created_at": alert.created_at.isoformat(),
@@ -47,6 +53,7 @@ async def get_alert(alert_id: str, db: Session = Depends(get_db)):
         "source": alert.source,
         "user_id": alert.user_id,
         "device_id": alert.device_id,
+        "ip_address_id": alert.ip_address_id,
         "investigation_id": alert.investigation_id,
         "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
         "created_at": alert.created_at.isoformat(),
@@ -56,9 +63,20 @@ async def get_alert(alert_id: str, db: Session = Depends(get_db)):
 
 @router.post("", response_model=dict, dependencies=[Depends(check_permission("manage_alerts"))])
 async def create_alert(payload: AlertCreate, db: Session = Depends(get_db)):
+    data = payload.model_dump()
+    if data.get("device_id") and not data.get("ip_address"):
+        device = db.query(Device).filter(Device.id == data["device_id"]).first()
+        if not device:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Device not found")
+        data["ip_address"] = device.ip_address
+    if data.get("ip_address_id"):
+        ip_record = db.query(IPAddress).filter(IPAddress.id == data["ip_address_id"]).first()
+        if not ip_record:
+            raise HTTPException(status_code=400, detail="IP address not found")
+        data["ip_address"] = ip_record.address
     alert = AlertService.create_alert(
         db,
-        **payload.model_dump(),
+        **data,
     )
     return {
         "id": alert.id,
@@ -69,6 +87,12 @@ async def create_alert(payload: AlertCreate, db: Session = Depends(get_db)):
         "source": alert.source,
         "user_id": alert.user_id,
         "device_id": alert.device_id,
+        "ip_address_id": alert.ip_address_id,
+        "device": {
+            "hostname": alert.device.hostname,
+            "ip_address": alert.device.ip_address,
+            "status": alert.device.status,
+        } if alert.device else None,
         "investigation_id": alert.investigation_id,
         "detection_time": alert.detection_time.isoformat() if alert.detection_time else None,
     }
@@ -86,6 +110,12 @@ async def update_alert(alert_id: str, payload: AlertUpdate, db: Session = Depend
         "source": alert.source,
         "user_id": alert.user_id,
         "device_id": alert.device_id,
+        "ip_address_id": alert.ip_address_id,
+        "device": {
+            "hostname": alert.device.hostname,
+            "ip_address": alert.device.ip_address,
+            "status": alert.device.status,
+        } if alert.device else None,
         "investigation_id": alert.investigation_id,
     }
 

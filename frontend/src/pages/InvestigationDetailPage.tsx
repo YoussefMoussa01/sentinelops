@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Trash2 } from 'lucide-react'
 import { alertsAPI, investigationsAPI } from '@/services/api'
 
 interface InvestigationDetails {
@@ -87,6 +88,18 @@ export const InvestigationDetailPage = () => {
       setEvidence((current) => [created, ...current]); setEvidenceTitle(''); setEvidenceReference('')
     } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unable to add evidence') }
     finally { setResourceSaving(false) }
+  }
+
+  const removeNote = async (noteId: string) => {
+    if (!investigationId || !window.confirm('Delete this note?')) return
+    try { await investigationsAPI.deleteNote(investigationId, noteId); setNotes((current) => current.filter((note) => note.id !== noteId)) }
+    catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unable to delete note') }
+  }
+
+  const removeEvidence = async (evidenceId: string) => {
+    if (!investigationId || !window.confirm('Delete this evidence?')) return
+    try { await investigationsAPI.deleteEvidence(investigationId, evidenceId); setEvidence((current) => current.filter((item) => item.id !== evidenceId)) }
+    catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unable to delete evidence') }
   }
 
   const linkAlert = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -203,12 +216,12 @@ export const InvestigationDetailPage = () => {
             <section>
               <div className="flex items-center justify-between"><div><p className="eyebrow">Case record</p><h3 className="mt-1 text-lg font-semibold text-[var(--ink)]">Investigation notes</h3></div><span className="status-chip status-chip--low">{notes.length}</span></div>
               <form onSubmit={addNote} className="mt-4 space-y-3"><textarea value={noteContent} onChange={(event) => setNoteContent(event.target.value)} placeholder="Record an observation or next step..." rows={3} className="field-control" /><button disabled={resourceSaving || !noteContent.trim()} type="submit" className="btn-primary disabled:opacity-50">Add note</button></form>
-              <div className="mt-4 space-y-3">{notes.length === 0 ? <p className="text-sm text-[var(--muted)]">No notes recorded yet.</p> : notes.map((note) => <article key={note.id} className="rounded-xl border border-[var(--line)] bg-slate-50/70 p-3"><p className="text-sm leading-6 text-[var(--ink-soft)]">{note.content}</p><p className="mt-2 font-mono text-[10px] text-[var(--muted)]">{note.created_at}</p></article>)}</div>
+              <div className="mt-4 space-y-3">{notes.length === 0 ? <p className="text-sm text-[var(--muted)]">No notes recorded yet.</p> : notes.map((note) => <article key={note.id} className="rounded-xl border border-[var(--line)] bg-slate-50/70 p-3"><div className="flex justify-between gap-3"><p className="text-sm leading-6 text-[var(--ink-soft)]">{note.content}</p><button aria-label="Delete note" onClick={() => removeNote(note.id)} className="text-gray-400 hover:text-red-600"><Trash2 size={15} /></button></div><p className="mt-2 font-mono text-[10px] text-[var(--muted)]">{note.created_at}</p></article>)}</div>
             </section>
             <section>
               <div className="flex items-center justify-between"><div><p className="eyebrow">Collected material</p><h3 className="mt-1 text-lg font-semibold text-[var(--ink)]">Evidence</h3></div><span className="status-chip status-chip--low">{evidence.length}</span></div>
               <form onSubmit={addEvidence} className="mt-4 space-y-3"><input required value={evidenceTitle} onChange={(event) => setEvidenceTitle(event.target.value)} placeholder="Evidence title" className="field-control" /><input value={evidenceReference} onChange={(event) => setEvidenceReference(event.target.value)} placeholder="Reference, URL or case ID" className="field-control" /><button disabled={resourceSaving || !evidenceTitle.trim()} type="submit" className="btn-primary disabled:opacity-50">Add evidence</button></form>
-              <div className="mt-4 space-y-3">{evidence.length === 0 ? <p className="text-sm text-[var(--muted)]">No evidence collected yet.</p> : evidence.map((item) => <article key={item.id} className="rounded-xl border border-[var(--line)] bg-slate-50/70 p-3"><p className="font-semibold text-[var(--ink)]">{item.title}</p><p className="mt-1 text-xs text-[var(--muted)]">{item.reference || 'No reference'} - {item.evidence_type}</p></article>)}</div>
+              <div className="mt-4 space-y-3">{evidence.length === 0 ? <p className="text-sm text-[var(--muted)]">No evidence collected yet.</p> : evidence.map((item) => <article key={item.id} className="rounded-xl border border-[var(--line)] bg-slate-50/70 p-3"><div className="flex justify-between gap-3"><p className="font-semibold text-[var(--ink)]">{item.title}</p><button aria-label="Delete evidence" onClick={() => removeEvidence(item.id)} className="text-gray-400 hover:text-red-600"><Trash2 size={15} /></button></div><p className="mt-1 text-xs text-[var(--muted)]">{item.reference || 'No reference'} - {item.evidence_type}</p></article>)}</div>
             </section>
           </div>
           <section className="border-t pt-5">

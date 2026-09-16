@@ -31,9 +31,8 @@ services:
       - ./backend/.env
     environment:
       DATABASE_URL: postgresql://sentinelops:sentinelops_pass@postgres:5432/sentinelops_db
-      JWT_SECRET_KEY: test-secret-key-change-in-production
+      PYTHONPATH: /app
       CORS_ORIGINS: http://localhost:5173,http://frontend:80
-      DEBUG: "True"
       ENVIRONMENT: development
     ports:
       - "8000:8000"
@@ -45,7 +44,7 @@ services:
       - ./backend/logs:/app/logs
     networks:
       - sentinelops_network
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   # React Frontend
   frontend:
