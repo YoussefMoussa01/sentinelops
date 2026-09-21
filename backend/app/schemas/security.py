@@ -56,6 +56,7 @@ class InvestigationCreate(BaseModel):
     risk_score: float = Field(default=0.0, ge=0.0, le=100.0)
     status: InvestigationStatus = InvestigationStatus.OPEN
     created_by: str | None = None
+    assigned_to: str | None = None
 
 
 class InvestigationUpdate(BaseModel):
@@ -64,6 +65,7 @@ class InvestigationUpdate(BaseModel):
     severity: AlertSeverity | None = None
     risk_score: float | None = Field(default=None, ge=0.0, le=100.0)
     status: InvestigationStatus | None = None
+    assigned_to: str | None = None
 
 
 class DeviceCreate(BaseModel):

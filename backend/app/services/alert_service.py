@@ -20,8 +20,18 @@ class AlertService:
         return alert
 
     @staticmethod
-    def list_alerts(db: Session, skip: int = 0, limit: int = 100) -> list[Alert]:
-        return AlertRepository.get_all(db, skip=skip, limit=limit)
+    def list_alerts(db: Session, skip: int = 0, limit: int = 100, *, search: str | None = None,
+                    status: str | None = None, severity: str | None = None,
+                    sort_by: str = "created_at", sort_dir: str = "desc") -> list[Alert]:
+        return AlertRepository.get_all(
+            db, skip=skip, limit=limit, search=search, status=status,
+            severity=severity, sort_by=sort_by, sort_dir=sort_dir,
+        )
+
+    @staticmethod
+    def count_alerts(db: Session, *, search: str | None = None, status: str | None = None,
+                     severity: str | None = None) -> int:
+        return AlertRepository.count(db, search=search, status=status, severity=severity)
 
     @staticmethod
     def update_alert(db: Session, alert_id: str, **kwargs) -> Alert:

@@ -1,7 +1,6 @@
 """Agents module exports."""
-# AI Agents will be added in Phase 8
-# Structure:
-# - BaseAgent (abstract)
-# - SecurityAgent
+from app.agents.base import BaseAgent
+from app.agents.security_agent import SecurityAgent
+from app.agents.workflows import WORKFLOW_CATALOG, InvestigationWorkflow
 
-__all__ = []
+__all__ = ["BaseAgent", "SecurityAgent", "InvestigationWorkflow", "WORKFLOW_CATALOG"]

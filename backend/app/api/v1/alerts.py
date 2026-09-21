@@ -1,5 +1,5 @@
 """Alert API routes."""
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.alert_service import AlertService
@@ -12,11 +12,23 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 
 @router.get("", response_model=list[dict], dependencies=[Depends(check_permission("view_alerts"))])
 async def list_alerts(
+    response: Response,
     db: Session = Depends(get_db),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
+    search: str | None = Query(default=None, max_length=120),
+    status_filter: str | None = Query(default=None, alias="status"),
+    severity: str | None = Query(default=None),
+    sort_by: str = Query(default="created_at"),
+    sort_dir: str = Query(default="desc", pattern="^(asc|desc)$"),
 ):
-    alerts = AlertService.list_alerts(db, skip=skip, limit=limit)
+    alerts = AlertService.list_alerts(
+        db, skip=skip, limit=limit, search=search, status=status_filter,
+        severity=severity, sort_by=sort_by, sort_dir=sort_dir,
+    )
+    response.headers["X-Total-Count"] = str(
+        AlertService.count_alerts(db, search=search, status=status_filter, severity=severity)
+    )
     return [
         {
             "id": alert.id,

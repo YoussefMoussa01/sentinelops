@@ -1,5 +1,15 @@
 import { apiClient } from './client'
 
+export interface ListRequestParams {
+  skip?: number
+  limit?: number
+  search?: string
+  status?: string
+  severity?: string
+  sort_by?: string
+  sort_dir?: string
+}
+
 // Auth API
 export const authAPI = {
   login: async (username: string, password: string) => {
@@ -21,8 +31,8 @@ export const authAPI = {
 
 // Alerts API
 export const alertsAPI = {
-  getAlerts: async (skip = 0, limit = 20) => {
-    return apiClient.get('/alerts', { skip, limit })
+  getAlerts: async (params: ListRequestParams = {}) => {
+    return apiClient.getWithTotal<unknown[]>('/alerts', params)
   },
   getAlert: async (id: string) => {
     return apiClient.get(`/alerts/${id}`)
@@ -40,8 +50,8 @@ export const alertsAPI = {
 
 // Investigations API
 export const investigationsAPI = {
-  getInvestigations: async (skip = 0, limit = 20) => {
-    return apiClient.get('/investigations', { skip, limit })
+  getInvestigations: async (params: ListRequestParams = {}) => {
+    return apiClient.getWithTotal<unknown[]>('/investigations', params)
   },
   getInvestigation: async (id: string) => {
     return apiClient.get(`/investigations/${id}`)
@@ -49,6 +59,7 @@ export const investigationsAPI = {
   getInvestigationTimeline: async (id: string) => {
     return apiClient.get(`/investigations/${id}/timeline`)
   },
+  getAssignees: async () => apiClient.get('/investigations/assignees'),
   createInvestigation: async (data: unknown) => {
     return apiClient.post('/investigations', data)
   },
@@ -138,12 +149,19 @@ export const aiAPI = {
   sendMessage: async (conversationId: string, message: string) => {
     return apiClient.post(`/ai/conversations/${conversationId}/messages`, { message })
   },
+  streamMessage: async (conversationId: string, message: string, onEvent: (event: { type: string; content?: string }) => void) => {
+    return apiClient.streamPost(`/ai/conversations/${conversationId}/messages/stream`, { message }, onEvent)
+  },
   queryAssistant: async (message: string, context?: string, history?: unknown[]) => {
     return apiClient.post('/ai/query', { message, context, history })
   },
   executeTool: async (name: string, arguments_: Record<string, unknown> = {}) => {
     return apiClient.post('/ai/tools/execute', { name, arguments: arguments_ })
   },
+  getToolCalls: async (limit = 50) => apiClient.get('/ai/tool-calls', { limit }),
+  getWorkflows: async () => apiClient.get('/ai/workflows'),
+  runAlertTriage: async (alertId: string) => apiClient.post('/ai/workflows/alert-triage', { alert_id: alertId }),
+  runInvestigationBrief: async (investigationId: string) => apiClient.post('/ai/workflows/investigation-brief', { investigation_id: investigationId }),
 }
 
 // IP intelligence API

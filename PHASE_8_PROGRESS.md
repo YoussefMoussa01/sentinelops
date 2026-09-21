@@ -18,9 +18,12 @@
 - Conversation search covers titles and message content.
 - Added permission-aware read-only AI tools for alerts, devices, logs and IP intelligence.
 - Tool execution validates tool names, role permissions and result limits.
+- Added persistent AI tool-call records and security audit events with user ownership.
+- Added a user-scoped endpoint for reviewing AI tool execution history.
+- Added SSE streaming for persisted conversation responses.
+- Chat widget now renders streamed assistant chunks progressively.
+- OpenRouter native SSE deltas are now forwarded when live provider streaming is available.
 
 ## Next Tasks
 
-- Store tool calls and audit events.
-- Add streaming responses for the chat widget.
 - Add frontend conversation history and loading states.

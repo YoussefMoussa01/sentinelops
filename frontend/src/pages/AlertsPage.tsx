@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, ShieldAlert } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Search } from 'lucide-react'
 import { alertsAPI, devicesAPI } from '@/services/api'
+import { useAuth } from '@/features/auth/hooks/useAuth'
+import { useListQuery } from '@/hooks/useListQuery'
 
 interface AlertItem {
   id: string
@@ -22,45 +24,61 @@ interface DeviceOption {
   status: string
 }
 
+const SORT_OPTIONS = [
+  { value: 'created_at', label: 'Created' },
+  { value: 'severity', label: 'Severity' },
+  { value: 'status', label: 'Status' },
+  { value: 'title', label: 'Title' },
+]
+
 export const AlertsPage = () => {
+  const { user } = useAuth()
+  const canManageAlerts = user?.permissions?.includes('manage_alerts') ?? false
+  const { filters, searchInput, setSearch, setStatus, setSeverity, setPage, toggleSort, pageSize } = useListQuery({
+    defaultSortBy: 'created_at',
+    defaultSortDir: 'desc',
+  })
   const [alerts, setAlerts] = useState<AlertItem[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [severity, setSeverity] = useState('MEDIUM')
+  const [severity, setSeverityValue] = useState('MEDIUM')
   const [source, setSource] = useState('')
   const [saving, setSaving] = useState(false)
   const [devices, setDevices] = useState<DeviceOption[]>([])
   const [deviceId, setDeviceId] = useState('')
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('ALL')
-  const [severityFilter, setSeverityFilter] = useState('ALL')
-  const [page, setPage] = useState(0)
-  const pageSize = 20
 
-  useEffect(() => {
-    loadAlerts()
-    devicesAPI.getDevices().then((response) => {
-      if (Array.isArray(response)) setDevices(response as DeviceOption[])
-    }).catch(() => setDevices([]))
-  }, [page])
-
-  const loadAlerts = () => {
+  const loadAlerts = useCallback(() => {
     setLoading(true)
-    alertsAPI.getAlerts(page * pageSize, pageSize)
+    alertsAPI.getAlerts({
+      skip: filters.page * pageSize,
+      limit: pageSize,
+      search: filters.search || undefined,
+      status: filters.status === 'ALL' ? undefined : filters.status,
+      severity: filters.severity === 'ALL' ? undefined : filters.severity,
+      sort_by: filters.sortBy,
+      sort_dir: filters.sortDir,
+    })
       .then((response) => {
-        if (Array.isArray(response)) {
-          setAlerts(response as AlertItem[])
-          return
-        }
-        const payload = response as { data?: AlertItem[]; value?: AlertItem[] }
-        setAlerts(payload.data || payload.value || [])
+        setAlerts(response.items as AlertItem[])
+        setTotal(response.total)
       })
       .catch((requestError: Error) => setError(requestError.message))
       .finally(() => setLoading(false))
-  }
+  }, [filters.page, filters.search, filters.status, filters.severity, filters.sortBy, filters.sortDir, pageSize])
+
+  useEffect(() => {
+    loadAlerts()
+  }, [loadAlerts])
+
+  useEffect(() => {
+    devicesAPI.getDevices().then((response) => {
+      if (Array.isArray(response)) setDevices(response as DeviceOption[])
+    }).catch(() => setDevices([]))
+  }, [])
 
   const createAlert = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -73,7 +91,8 @@ export const AlertsPage = () => {
       setSource('')
       setDeviceId('')
       setShowForm(false)
-      loadAlerts()
+      if (filters.page !== 0) setPage(0)
+      else loadAlerts()
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to create alert')
     } finally {
@@ -81,29 +100,24 @@ export const AlertsPage = () => {
     }
   }
 
-  const filteredAlerts = alerts.filter((alert) => {
-    const text = `${alert.title} ${alert.description || ''} ${alert.source || ''}`.toLowerCase()
-    return text.includes(search.toLowerCase()) &&
-      (statusFilter === 'ALL' || alert.status === statusFilter) &&
-      (severityFilter === 'ALL' || alert.severity === severityFilter)
-  })
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   return (
     <div className="page-frame space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div><p className="eyebrow">Signal triage</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--ink)]">Alerts</h1><p className="mt-2 text-sm text-[var(--muted)]">Review active signals and move the right events into investigation.</p></div>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
+        {canManageAlerts && <button onClick={() => setShowForm(!showForm)} className="btn-primary">
           <Plus size={17} />
           {showForm ? 'Cancel' : 'New alert'}
-        </button>
+        </button>}
       </div>
-      {showForm && (
+      {canManageAlerts && showForm && (
         <form onSubmit={createAlert} className="surface rounded-2xl p-6 space-y-4">
           <div><p className="eyebrow">Create signal</p><h2 className="mt-1 text-xl font-bold">Add an alert to the triage queue</h2></div>
           <input required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Alert title" className="field-control" />
           <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description" className="field-control" rows={3} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <select value={severity} onChange={(event) => setSeverity(event.target.value)} className="field-control">
+            <select value={severity} onChange={(event) => setSeverityValue(event.target.value)} className="field-control">
               <option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option>
             </select>
             <div>
@@ -132,20 +146,23 @@ export const AlertsPage = () => {
           </button>
         </form>
       )}
-      {loading && <p className="text-gray-600">Loading alerts...</p>}
       {error && <p className="text-red-600">Unable to load alerts: {error}</p>}
-      {!loading && !error && (
+      {!error && (
         <div className="surface overflow-hidden rounded-2xl">
-          <div className="grid grid-cols-1 gap-3 border-b border-[var(--line)] bg-slate-50/70 p-4 md:grid-cols-3">
-            <label className="relative"><Search size={16} className="absolute left-3 top-3 text-[var(--muted)]" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search alerts" className="field-control pl-9" /></label>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="field-control"><option value="ALL">All statuses</option><option>NEW</option><option>ACKNOWLEDGED</option><option>INVESTIGATING</option><option>RESOLVED</option><option>FALSE_POSITIVE</option></select>
-            <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)} className="field-control"><option value="ALL">All severities</option><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select>
+          <div className="grid grid-cols-1 gap-3 border-b border-[var(--line)] bg-slate-50/70 p-4 md:grid-cols-2 lg:grid-cols-4">
+            <label className="relative"><Search size={16} className="absolute left-3 top-3 text-[var(--muted)]" /><input value={searchInput} onChange={(event) => setSearch(event.target.value)} placeholder="Search alerts" className="field-control pl-9" /></label>
+            <select value={filters.status} onChange={(event) => setStatus(event.target.value)} className="field-control"><option value="ALL">All statuses</option><option>NEW</option><option>ACKNOWLEDGED</option><option>INVESTIGATING</option><option>RESOLVED</option><option>FALSE_POSITIVE</option></select>
+            <select value={filters.severity} onChange={(event) => setSeverity(event.target.value)} className="field-control"><option value="ALL">All severities</option><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select>
+            <div className="flex gap-2">
+              <select value={filters.sortBy} onChange={(event) => toggleSort(event.target.value)} className="field-control" aria-label="Sort alerts by">{SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>Sort: {option.label}</option>)}</select>
+              <button type="button" onClick={() => toggleSort(filters.sortBy)} aria-label="Toggle sort direction" className="btn-secondary px-3">{filters.sortDir === 'desc' ? <ArrowDown size={16} /> : <ArrowUp size={16} />}</button>
+            </div>
           </div>
-          {filteredAlerts.length === 0 ? (
-            <p className="p-6 text-gray-600">No alerts found.</p>
-          ) : (
+          {loading && <p className="p-6 text-gray-600">Loading alerts...</p>}
+          {!loading && alerts.length === 0 && <p className="p-6 text-gray-600">No alerts found.</p>}
+          {!loading && alerts.length > 0 && (
             <div className="divide-y divide-gray-200">
-              {filteredAlerts.map((alert) => (
+              {alerts.map((alert) => (
                 <Link key={alert.id} to={`/alerts/${alert.id}`} className="data-row block p-5">
                   <div className="flex items-center justify-between gap-4">
                     <h2 className="font-semibold text-gray-900">{alert.title}</h2>
@@ -158,9 +175,9 @@ export const AlertsPage = () => {
             </div>
           )}
           <div className="flex items-center justify-between border-t border-gray-200 p-4">
-            <button disabled={page === 0 || loading} onClick={() => setPage(page - 1)} className="rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40">Previous</button>
-            <span className="text-sm text-gray-500">Page {page + 1}</span>
-            <button disabled={alerts.length < pageSize || loading} onClick={() => setPage(page + 1)} className="rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40">Next</button>
+            <button disabled={filters.page === 0 || loading} onClick={() => setPage(filters.page - 1)} className="rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40">Previous</button>
+            <span className="text-sm text-gray-500">Page {filters.page + 1} of {totalPages} · {total} alerts</span>
+            <button disabled={filters.page + 1 >= totalPages || loading} onClick={() => setPage(filters.page + 1)} className="rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40">Next</button>
           </div>
         </div>
       )}

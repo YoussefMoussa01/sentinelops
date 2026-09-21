@@ -25,11 +25,14 @@ class Investigation(Base, TimestampMixin):
         nullable=False,
     )
     created_by = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    assigned_to = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     creator = relationship("User", back_populates="created_investigations", foreign_keys=[created_by])
+    assignee = relationship("User", back_populates="assigned_investigations", foreign_keys=[assigned_to])
     alerts = relationship("Alert", back_populates="investigation")
     evidence = relationship("Evidence", back_populates="investigation", cascade="all, delete-orphan")
     notes = relationship("InvestigationNote", back_populates="investigation", cascade="all, delete-orphan")
+    status_history = relationship("InvestigationStatusHistory", back_populates="investigation", cascade="all, delete-orphan", order_by="InvestigationStatusHistory.created_at")
 
     def __repr__(self) -> str:
         return f"<Investigation(id={self.id}, title={self.title})>"

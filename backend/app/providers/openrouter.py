@@ -1,7 +1,8 @@
 """OpenRouter chat-completions provider."""
 import asyncio
+import json
 import httpx
-from typing import Any
+from typing import Any, AsyncIterator
 from app.core.logging import get_logger
 
 from app.core.config import Settings
@@ -15,6 +16,52 @@ class OpenRouterProvider(AIProvider):
     def __init__(self, settings: Settings):
         self.settings = settings
         self.logger = get_logger("openrouter")
+
+    async def stream(self, messages: list[dict[str, Any]]) -> AsyncIterator[str]:
+        """Yield content deltas from OpenRouter's native SSE response."""
+        if not self.settings.OPENROUTER_API_KEY:
+            raise AIError("OpenRouter is not configured.")
+        headers = {
+            "Authorization": f"Bearer {self.settings.OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        if self.settings.AI_SITE_URL:
+            headers["HTTP-Referer"] = self.settings.AI_SITE_URL
+        if self.settings.AI_SITE_NAME:
+            headers["X-OpenRouter-Title"] = self.settings.AI_SITE_NAME
+        payload = {
+            "model": self.settings.AI_MODEL,
+            "messages": messages,
+            "temperature": self.settings.AI_TEMPERATURE,
+            "max_tokens": self.settings.AI_MAX_TOKENS,
+            "reasoning": {"enabled": self.settings.AI_REASONING_ENABLED},
+            "stream": True,
+        }
+        fallback_models = [model.strip() for model in self.settings.AI_FALLBACK_MODELS.split(",") if model.strip() and model.strip() != self.settings.AI_MODEL]
+        if fallback_models:
+            payload["models"] = fallback_models
+
+        try:
+            async with httpx.AsyncClient(timeout=self.settings.AI_TIMEOUT_SECONDS) as client:
+                async with client.stream("POST", self.endpoint, headers=headers, json=payload) as response:
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        if not line.startswith("data:"):
+                            continue
+                        raw = line[5:].strip()
+                        if raw == "[DONE]":
+                            break
+                        try:
+                            event = json.loads(raw)
+                            delta = event["choices"][0].get("delta", {})
+                            content = delta.get("content") if isinstance(delta, dict) else None
+                            if isinstance(content, str) and content:
+                                yield content
+                        except (ValueError, KeyError, IndexError, TypeError):
+                            self.logger.warning("OpenRouter returned an invalid stream event")
+        except httpx.HTTPError as exc:
+            self.logger.error("OpenRouter streaming request failed: %s", exc)
+            raise AIError("OpenRouter streaming request failed.") from exc
 
     async def complete(self, messages: list[dict[str, Any]]) -> AICompletion:
         if not self.settings.OPENROUTER_API_KEY:

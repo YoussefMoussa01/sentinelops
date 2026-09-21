@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Archive, Bot, Clock3, MessageSquarePlus, Search, Send, ShieldAlert, Sparkles, Trash2 } from 'lucide-react'
+import { Archive, Bot, Clock3, MessageSquarePlus, Search, Send, ShieldAlert, Sparkles, Trash2, Wrench } from 'lucide-react'
 import { aiAPI } from '@/services/api'
 import { MarkdownMessage } from '@/components/MarkdownMessage'
 
 interface Conversation { id: string; title: string; is_archived: boolean; updated_at: string }
 interface StoredMessage { role: 'user' | 'assistant'; content: string }
 interface ConversationDetails extends Conversation { messages: StoredMessage[] }
+interface ToolCall { id: string; tool_name: string; status: string; duration_ms?: number; created_at: string }
 
 export const AiPage = () => {
   const [message, setMessage] = useState('')
@@ -17,6 +18,9 @@ export const AiPage = () => {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [toolResult, setToolResult] = useState<{ tool: string; data: unknown } | null>(null)
+  const [toolCalls, setToolCalls] = useState<ToolCall[]>([])
+  const [toolLoading, setToolLoading] = useState(false)
 
   const loadConversations = async (includeArchived = showArchived, query = search): Promise<Conversation[]> => {
     const response = await aiAPI.getConversations(includeArchived, query)
@@ -45,11 +49,23 @@ export const AiPage = () => {
   }
 
   useEffect(() => {
+    aiAPI.getToolCalls(8).then((response) => { if (Array.isArray(response)) setToolCalls(response as ToolCall[]) }).catch(() => setToolCalls([]))
     loadConversations().then(async (items) => {
       if (items.length > 0) await openConversation(items[0].id)
       else await createConversation()
     }).catch((requestError) => setError(requestError instanceof Error ? requestError.message : 'Unable to load conversations'))
   }, [])
+
+  const runTool = async (name: string) => {
+    setToolLoading(true); setError('')
+    try {
+      const result = await aiAPI.executeTool(name, { limit: 10 }) as { tool: string; data: unknown }
+      setToolResult(result)
+      const calls = await aiAPI.getToolCalls(8)
+      if (Array.isArray(calls)) setToolCalls(calls as ToolCall[])
+    } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unable to execute investigation tool') }
+    finally { setToolLoading(false) }
+  }
 
   const askAssistant = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -83,7 +99,7 @@ export const AiPage = () => {
     <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow">Analyst workspace</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--ink)]">AI investigation agent</h1><p className="mt-2 max-w-xl text-sm text-[var(--muted)]">Turn raw signals into a focused first-pass triage for your next decision.</p></div><div className="flex items-center gap-2 rounded-full bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700"><span className="h-2 w-2 rounded-full bg-teal-500" /> Ready to assist</div></div>
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_0.8fr]">
       <div className="surface rounded-2xl p-6"><div className="mb-6 flex items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--ink)] text-white"><Bot size={22} /></span><div><h2 className="font-semibold text-[var(--ink)]">Ask a case question</h2><p className="text-xs text-[var(--muted)]">Your context stays in this workspace.</p></div></div><button onClick={createConversation} className="btn-primary"><MessageSquarePlus size={15} /> New</button></div><form onSubmit={askAssistant} className="space-y-4"><textarea required value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Describe the signal, user, device or investigation..." rows={6} className="w-full resize-none rounded-xl border border-[var(--line)] bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[var(--cyan)]" /><div className="flex justify-end"><button disabled={loading} type="submit" className="inline-flex items-center gap-2 rounded-lg bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--cyan)] hover:text-[var(--ink)] disabled:opacity-50"><Send size={16} />{loading ? 'Analyzing...' : 'Run triage'}</button></div></form>{error && <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}{answer && <div className="mt-6 rounded-xl border border-teal-100 bg-teal-50/60 p-5 text-sm leading-6 text-[var(--ink-soft)]"><div className="mb-3 flex items-center gap-2 font-semibold text-teal-800"><Sparkles size={16} /> Triage output</div><MarkdownMessage content={answer} /></div>}</div>
-      <aside className="space-y-6"><div className="surface rounded-2xl p-5"><div className="mb-4 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><Clock3 size={17} className="text-[var(--violet)]" /><h2 className="font-semibold text-[var(--ink)]">Conversations</h2></div><button onClick={() => { setShowArchived(!showArchived); loadConversations(!showArchived) }} className="text-xs font-semibold text-[var(--cyan)]">{showArchived ? 'Active' : 'Archived'}</button></div><div className="mb-4 flex gap-2"><input value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') loadConversations(showArchived, search) }} placeholder="Search conversations..." className="field-control min-w-0 flex-1 py-2 text-xs" /><button onClick={() => loadConversations(showArchived, search)} aria-label="Search conversations" className="btn-primary px-3"><Search size={15} /></button></div><div className="space-y-2">{conversations.length === 0 ? <p className="text-sm text-[var(--muted)]">No conversations found.</p> : conversations.map((conversation) => <div key={conversation.id} className={`flex items-center gap-2 rounded-lg border p-2 ${conversation.id === conversationId ? 'border-[var(--cyan)] bg-teal-50' : 'border-[var(--line)]'}`}><button onClick={() => openConversation(conversation.id)} className="min-w-0 flex-1 truncate text-left text-sm text-[var(--ink-soft)]">{conversation.title}</button><button title={conversation.is_archived ? 'Restore conversation' : 'Archive conversation'} onClick={() => archiveConversation(conversation)} className="text-[var(--muted)] hover:text-[var(--cyan)]"><Archive size={14} /></button><button title="Delete conversation" onClick={() => deleteConversation(conversation)} className="text-[var(--muted)] hover:text-red-600"><Trash2 size={14} /></button></div>)}</div></div><div className="surface rounded-2xl p-5"><div className="mb-4 flex items-center gap-2"><ShieldAlert size={17} className="text-[var(--coral)]" /><h2 className="font-semibold text-[var(--ink)]">Suggested prompts</h2></div><div className="space-y-2">{prompts.map((prompt) => <button key={prompt} onClick={() => setMessage(prompt)} className="w-full rounded-lg border border-[var(--line)] p-3 text-left text-sm text-[var(--ink-soft)] hover:border-[var(--cyan)] hover:bg-teal-50">{prompt}</button>)}</div></div></aside>
+      <aside className="space-y-6"><div className="surface rounded-2xl p-5"><div className="mb-4 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><Clock3 size={17} className="text-[var(--violet)]" /><h2 className="font-semibold text-[var(--ink)]">Conversations</h2></div><button onClick={() => { setShowArchived(!showArchived); loadConversations(!showArchived) }} className="text-xs font-semibold text-[var(--cyan)]">{showArchived ? 'Active' : 'Archived'}</button></div><div className="mb-4 flex gap-2"><input value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') loadConversations(showArchived, search) }} placeholder="Search conversations..." className="field-control min-w-0 flex-1 py-2 text-xs" /><button onClick={() => loadConversations(showArchived, search)} aria-label="Search conversations" className="btn-primary px-3"><Search size={15} /></button></div><div className="space-y-2">{conversations.length === 0 ? <p className="text-sm text-[var(--muted)]">No conversations found.</p> : conversations.map((conversation) => <div key={conversation.id} className={`flex items-center gap-2 rounded-lg border p-2 ${conversation.id === conversationId ? 'border-[var(--cyan)] bg-teal-50' : 'border-[var(--line)]'}`}><button onClick={() => openConversation(conversation.id)} className="min-w-0 flex-1 truncate text-left text-sm text-[var(--ink-soft)]">{conversation.title}</button><button title={conversation.is_archived ? 'Restore conversation' : 'Archive conversation'} onClick={() => archiveConversation(conversation)} className="text-[var(--muted)] hover:text-[var(--cyan)]"><Archive size={14} /></button><button title="Delete conversation" onClick={() => deleteConversation(conversation)} className="text-[var(--muted)] hover:text-red-600"><Trash2 size={14} /></button></div>)}</div></div><div className="surface rounded-2xl p-5"><div className="mb-4 flex items-center gap-2"><Wrench size={17} className="text-[var(--cyan)]" /><h2 className="font-semibold text-[var(--ink)]">Investigation tools</h2></div><div className="grid grid-cols-2 gap-2">{[['search_alerts', 'Alerts'], ['search_devices', 'Devices'], ['search_logs', 'Logs'], ['inspect_ip', 'IP intelligence']].map(([name, label]) => <button key={name} disabled={toolLoading} onClick={() => runTool(name)} className="rounded-lg border border-[var(--line)] p-2 text-left text-xs font-semibold text-[var(--ink-soft)] hover:border-[var(--cyan)] hover:bg-teal-50 disabled:opacity-50">{toolLoading ? 'Running...' : label}</button>)}</div>{toolResult && <pre className="mt-3 max-h-48 overflow-auto rounded-lg bg-slate-950 p-3 text-[10px] leading-4 text-teal-100">{JSON.stringify(toolResult.data, null, 2)}</pre>}<p className="mt-3 text-xs text-[var(--muted)]">{toolCalls.length} recent tool call{toolCalls.length === 1 ? '' : 's'} recorded.</p></div><div className="surface rounded-2xl p-5"><div className="mb-4 flex items-center gap-2"><ShieldAlert size={17} className="text-[var(--coral)]" /><h2 className="font-semibold text-[var(--ink)]">Suggested prompts</h2></div><div className="space-y-2">{prompts.map((prompt) => <button key={prompt} onClick={() => setMessage(prompt)} className="w-full rounded-lg border border-[var(--line)] p-3 text-left text-sm text-[var(--ink-soft)] hover:border-[var(--cyan)] hover:bg-teal-50">{prompt}</button>)}</div></div></aside>
     </div>
   </div>
 }

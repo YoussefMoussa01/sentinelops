@@ -10,7 +10,19 @@ class IPAddressRepository:
     def create(db: Session, **values) -> IPAddress:
         if db.query(IPAddress).filter(IPAddress.address == values["address"]).first():
             raise ConflictError("IP address already exists")
+        has_location = any(
+            values.get(key) is not None for key in ("country", "city", "latitude", "longitude")
+        )
         item = IPAddress(**values)
+        if has_location:
+            item.locations.append(
+                Location(
+                    country=values.get("country"),
+                    city=values.get("city"),
+                    latitude=values.get("latitude"),
+                    longitude=values.get("longitude"),
+                )
+            )
         db.add(item)
         db.commit()
         db.refresh(item)

@@ -71,6 +71,18 @@ class ApiClient {
     }
   }
 
+  async getWithTotal<T>(path: string, params?: object): Promise<{ items: T; total: number }> {
+    try {
+      const response = await this.client.get<T>(path, { params })
+      const header = response.headers['x-total-count']
+      const data = response.data
+      const total = header !== undefined ? Number(header) : Array.isArray(data) ? data.length : 0
+      return { items: data, total: Number.isNaN(total) ? 0 : total }
+    } catch (error) {
+      throw this.handleError(error)
+    }
+  }
+
   async post<T, D = unknown>(path: string, data?: D) {
     try {
       const response = await this.client.post<T>(path, data)
@@ -95,6 +107,30 @@ class ApiClient {
       return response.data
     } catch (error) {
       throw this.handleError(error)
+    }
+  }
+
+  async streamPost(path: string, data: unknown, onEvent: (event: { type: string; content?: string }) => void) {
+    const tokenKey = import.meta.env.VITE_TOKEN_STORAGE_KEY || 'sentinelops_token'
+    const response = await fetch(`${this.client.defaults.baseURL}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
+      body: JSON.stringify(data),
+    })
+    if (!response.ok || !response.body) throw new Error(response.statusText || 'Streaming request failed')
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    while (true) {
+      const { value, done } = await reader.read()
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done })
+      const events = buffer.split('\n\n')
+      buffer = events.pop() || ''
+      for (const event of events) {
+        const line = event.split('\n').find((item) => item.startsWith('data: '))
+        if (line) onEvent(JSON.parse(line.slice(6)) as { type: string; content?: string })
+      }
+      if (done) break
     }
   }
 

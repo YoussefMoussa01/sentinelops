@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { dashboardAPI } from '@/services/api'
 import { Activity, AlertTriangle, ArrowUpRight, Bot, CircleDot, ShieldCheck, Users, Server } from 'lucide-react'
+import { AlertTrendChart, SeverityPieChart, StatusBarChart } from '@/components/charts/AlertCharts'
 
 interface DashboardStats {
   active_alerts: number
@@ -10,6 +11,9 @@ interface DashboardStats {
   devices: number
   recent_alerts: Array<{ id: string; title: string; severity: string; status: string; source?: string }>
   recent_investigations: Array<{ id: string; title: string; severity: string; status: string; risk_score: number }>
+  severity_distribution: Record<string, number>
+  status_distribution: Record<string, number>
+  alert_trend: Array<{ date: string; count: number }>
 }
 
 export const DashboardPage = () => {
@@ -41,6 +45,21 @@ export const DashboardPage = () => {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {kpis.map(({ label, value, detail, icon: Icon, color, bg }) => <div key={label} className="surface rounded-xl p-5"><div className="flex items-start justify-between"><div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg} ${color}`}><Icon size={20} /></div><CircleDot size={16} className="text-[var(--line)]" /></div><p className="mt-5 text-sm font-medium text-[var(--muted)]">{label}</p><p className="mt-1 text-3xl font-bold tracking-tight text-[var(--ink)]">{value}</p><p className="mt-2 text-xs text-[var(--muted)]">{detail}</p></div>)}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="surface rounded-xl p-6">
+          <div className="mb-3 flex items-center justify-between"><div><p className="eyebrow">Signal mix</p><h2 className="mt-1 text-lg font-bold text-[var(--ink)]">Alerts by severity</h2></div><AlertTriangle className="text-[var(--coral)]" size={20} /></div>
+          <SeverityPieChart distribution={stats.severity_distribution} />
+        </div>
+        <div className="surface rounded-xl p-6">
+          <div className="mb-3 flex items-center justify-between"><div><p className="eyebrow">Triage state</p><h2 className="mt-1 text-lg font-bold text-[var(--ink)]">Alerts by status</h2></div><ShieldCheck className="text-[var(--cyan)]" size={20} /></div>
+          <StatusBarChart distribution={stats.status_distribution} />
+        </div>
+        <div className="surface rounded-xl p-6">
+          <div className="mb-3 flex items-center justify-between"><div><p className="eyebrow">7-day activity</p><h2 className="mt-1 text-lg font-bold text-[var(--ink)]">Alert volume</h2></div><Activity className="text-[var(--violet)]" size={20} /></div>
+          <AlertTrendChart trend={stats.alert_trend} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

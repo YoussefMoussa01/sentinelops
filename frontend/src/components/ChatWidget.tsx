@@ -7,6 +7,7 @@ interface Message {
   role: 'assistant' | 'user'
   text: string
   reasoningDetails?: unknown
+  streaming?: boolean
 }
 
 export const ChatWidget = () => {
@@ -37,11 +38,6 @@ export const ChatWidget = () => {
     setInput('')
     setLoading(true)
     try {
-      const history = messages.slice(1).map((item) => ({
-        role: item.role,
-        content: item.text,
-        ...(item.reasoningDetails !== undefined ? { reasoning_details: item.reasoningDetails } : {}),
-      }))
       // The widget is platform-wide and persists its conversation per user.
       let activeConversationId = conversationId
       if (!activeConversationId) {
@@ -49,8 +45,23 @@ export const ChatWidget = () => {
         activeConversationId = conversation.id
         setConversationId(activeConversationId)
       }
-      const response = await aiAPI.sendMessage(activeConversationId, text) as { assistant_message: { content: string; reasoning_details?: unknown } }
-      setMessages((current) => [...current, { role: 'assistant', text: response.assistant_message.content, reasoningDetails: response.assistant_message.reasoning_details }])
+      await aiAPI.streamMessage(activeConversationId, text, (event) => {
+        if (event.type === 'chunk' && event.content) {
+          setMessages((current) => {
+            const last = current[current.length - 1]
+            if (last?.role === 'assistant' && last.streaming) {
+              return [...current.slice(0, -1), { ...last, text: last.text + event.content }]
+            }
+            return [...current, { role: 'assistant', text: event.content || '', streaming: true }]
+          })
+        }
+        if (event.type === 'done') {
+          setMessages((current) => {
+            const last = current[current.length - 1]
+            return last?.streaming ? [...current.slice(0, -1), { ...last, streaming: false }] : current
+          })
+        }
+      })
     } catch (error) {
       setMessages((current) => [...current, { role: 'assistant', text: error instanceof Error ? error.message : 'Assistant unavailable.' }])
     } finally {

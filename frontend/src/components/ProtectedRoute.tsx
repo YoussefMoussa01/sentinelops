@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, Suspense } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
 
@@ -31,5 +31,9 @@ export const ProtectedRoute = ({
     return <Navigate to="/dashboard" replace />
   }
 
-  return <>{element}</>
+  return (
+    <Suspense fallback={<div className="flex min-h-[12rem] items-center justify-center text-sm text-[var(--muted)]">Loading view...</div>}>
+      {element}
+    </Suspense>
+  )
 }
